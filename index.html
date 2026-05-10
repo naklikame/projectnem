@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRAN VIA Residences - Prémiové bydlení</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --black: #111111;
+            --white: #ffffff;
+            --gray-light: #f5f5f5;
+            --gray: #e0e0e0;
+            --gray-dark: #888888;
+            --text-main: #111111;
+            --text-light: #666666;
+            --font-heading: 'Jost', sans-serif;
+            --font-body: 'Jost', sans-serif;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-body);
+            color: var(--text-main);
+            background-color: var(--white);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- SCROLL PROGRESS --- */
+        #scroll-progress {
+            position: fixed; top: 0; left: 0; height: 2px;
+            background: var(--black); z-index: 9998;
+            width: 0%; transition: width 0.1s linear;
+        }
+
+        /* --- PRELOADER --- */
+        #preloader {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+            pointer-events: all;
+        }
+        .pre-panel {
+            position: absolute; left: 0; width: 100%;
+            background: var(--black);
+        }
+        .pre-panel-top { top: 0; height: 51vh; }
+        .pre-panel-bottom { bottom: 0; height: 51vh; }
+        .intro-text-wrapper {
+            position: relative; z-index: 2;
+            width: 100%; text-align: center;
+            height: 4rem;
+        }
+        .intro-text {
+            position: absolute; width: 100%; text-align: center;
+            color: var(--white); font-family: var(--font-body);
+            font-size: clamp(1.2rem, 2.5vw, 2rem);
+            font-weight: 300; letter-spacing: 4px; text-transform: uppercase;
+            opacity: 0; top: 0; left: 0;
+        }
+        .intro-progress-wrap {
+            position: absolute; bottom: 8vh; left: 50%; transform: translateX(-50%);
+            z-index: 2; width: 200px; display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+        .intro-progress-bar {
+            height: 1px; background: rgba(255,255,255,0.15); border-radius: 1px; overflow: hidden; width: 100%;
+        }
+        .intro-progress-fill {
+            height: 100%; width: 0%; background: rgba(255,255,255,0.6); border-radius: 1px;
+        }
+
+        /* --- HEADER --- */
+        header {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.2rem 5vw; z-index: 1000;
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(10px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+            transform: translateY(-100%);
+            transition: box-shadow 0.3s;
+        }
+        header.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.06); }
+
+        .logo {
+            font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700;
+            color: var(--black); text-decoration: none; text-align: center;
+            line-height: 1.1; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .logo span {
+            display: block; font-size: 0.6rem; letter-spacing: 4px;
+            font-family: var(--font-body); font-weight: 400; color: var(--text-light);
+        }
+
+        nav { display: flex; gap: 2.2rem; align-items: center; }
+        nav a {
+            text-decoration: none; color: var(--black); font-size: 0.85rem;
+            font-weight: 500; transition: color 0.3s; position: relative;
+        }
+        nav a:not(.btn-header)::after {
+            content: ''; position: absolute; width: 0; height: 1px;
+            bottom: -4px; left: 0; background: var(--black); transition: width 0.3s;
+        }
+        nav a.active:not(.btn-header)::after { width: 100%; }
+        nav a:hover:not(.btn-header)::after { width: 100%; }
+
+        .btn-header {
+            background: var(--black); color: var(--white); padding: 11px 26px;
+            border-radius: 30px; transition: all 0.3s; border: 1px solid var(--black);
+        }
+        .btn-header:hover { background: var(--white); color: var(--black); transform: translateY(-2px); }
+
+        /* --- HAMBURGER --- */
+        .hamburger {
+            display: none; flex-direction: column; gap: 5px;
+            background: none; border: none; cursor: pointer; padding: 5px; z-index: 1001;
+        }
+        .hamburger span {
+            display: block; width: 24px; height: 2px; background: var(--black);
+            transition: all 0.3s var(--ease-out-expo); transform-origin: center;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* Mobile nav overlay */
+        .mobile-nav {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            background: var(--black); z-index: 999; flex-direction: column;
+            justify-content: center; align-items: center; gap: 2.5rem;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .mobile-nav.open { opacity: 1; pointer-events: all; }
+        .mobile-nav a {
+            color: var(--white); text-decoration: none; font-size: clamp(1.5rem, 5vw, 2rem);
+            font-family: var(--font-heading); font-weight: 400; letter-spacing: 2px;
+            transition: color 0.3s;
+        }
+        .mobile-nav a:hover { color: var(--gray-dark); }
+        .mobile-nav .btn-header { font-family: var(--font-body); font-size: 1rem; }
+
+        /* --- GSAP REVEAL --- */
+        .gsap-reveal { opacity: 0; transform: translateY(40px); }
+
+        /* --- SHARED STYLES --- */
+        .subtitle {
+            font-size: 0.9rem; text-transform: uppercase; letter-spacing: 3px;
+            color: var(--text-light); font-weight: 600; margin-bottom: 1rem; display: block;
+        }
+        h2.sec-title {
+            font-family: var(--font-heading); font-size: clamp(2.5rem, 4vw, 4rem);
+            color: var(--black); margin-bottom: 2rem; line-height: 1.1;
+        }
+        p.lead {
+            font-size: 1.15rem; color: var(--text-light); margin-bottom: 3rem;
+            line-height: 1.8; font-weight: 300;
+        }
+        .btn-dark {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 14px 30px; background-color: var(--black); color: var(--white);
+            font-weight: 600; border-radius: 30px; transition: all 0.3s ease;
+            font-size: 0.9rem; border: 1px solid var(--black); text-decoration: none; cursor: pointer;
+        }
+        .btn-dark:hover { background-color: var(--white); color: var(--black); transform: translateY(-2px); }
+
+        /* --- HERO --- */
+        .hero {
+            height: 100vh; position: relative;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            overflow: hidden;
+        }
+        .hero-bg {
+            position: absolute; inset: 0; z-index: 0;
+            background: linear-gradient(rgba(17,17,17,0.35), rgba(17,17,17,0.15)),
+                        url('hero.jpg') center 5%/cover no-repeat;
+        }
+        .hero-content { text-align: center; color: var(--white); z-index: 2; position: relative; }
+        .hero-title-svg { width: 240px; margin-bottom: 14px; opacity: 0; transform: scale(0.9); }
+        .hero-title {
+            font-family: var(--font-heading); font-size: clamp(3.2rem, 8vw, 7rem);
+            letter-spacing: 16px; font-weight: 300; text-transform: uppercase;
+            margin-left: 16px; overflow: hidden; line-height: 1;
+        }
+        .hero-title span { display: inline-block; transform: translateY(110%); }
+        .hero-scroll-hint {
+            position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.6); font-size: 0.75rem; letter-spacing: 3px;
+            text-transform: uppercase; display: flex; flex-direction: column;
+            align-items: center; gap: 10px; z-index: 2;
+            opacity: 0;
+        }
+        .scroll-line {
+            width: 1px; height: 50px; background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+            animation: scrollLine 2s ease infinite;
+        }
+        @keyframes scrollLine {
+            0% { transform: scaleY(0); transform-origin: top; }
+            50% { transform: scaleY(1); transform-origin: top; }
+            51% { transform: scaleY(1); transform-origin: bottom; }
+            100% { transform: scaleY(0); transform-origin: bottom; }
+        }
+
+        /* --- SCROLL TEXT --- */
+        .scroll-text-sec {
+            min-height: 100vh; display: flex; justify-content: center; align-items: center;
+            padding: 15vh 10vw; background: var(--white); position: relative;
+        }
+        .highlight-text {
+            font-size: clamp(1.2rem, 2.5vw, 2.2rem);
+            line-height: 1.6; font-weight: 400;
+            color: var(--gray);
+            max-width: 1000px; text-align: center; font-family: var(--font-body);
+        }
+        .highlight-text .word { display: inline-block; margin-right: 8px; will-change: color; }
+
+        /* --- BENEFITS --- */
+        .benefits-sec { padding: 15vh 5vw; background: var(--gray-light); position: relative; }
+        .sticky-wrapper { display: grid; gap: 4rem; align-items: start; }
+
+        @media (min-width: 1024px) {
+            .sticky-wrapper { grid-template-columns: 1fr 1.2fr; gap: 6vw; }
+            .sticky-content { position: sticky; top: 20vh; padding-bottom: 4rem; }
+        }
+
+        .sticky-content__title {
+            font-family: var(--font-heading); font-size: clamp(2.5rem, 4vw, 4rem);
+            color: var(--black); margin-bottom: 1.5rem; line-height: 1.1;
+        }
+        .sticky-content__text { color: var(--text-light); font-size: 1.15rem; margin-bottom: 2.5rem; line-height: 1.7; }
+
+        .scrolling-cards { display: flex; flex-direction: column; gap: clamp(2rem, 4vw, 4rem); }
+        .service-card {
+            background: var(--white); border: 1px solid var(--gray);
+            border-radius: 20px; padding: clamp(1.5rem, 3vw, 2.5rem);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); transition: all 0.4s var(--ease-out-expo);
+        }
+        .service-card:hover { box-shadow: 0 20px 50px rgba(0,0,0,0.1); transform: translateY(-6px); border-color: var(--black); }
+        .service-card-img { width: 100%; height: 300px; border-radius: 12px; overflow: hidden; margin-bottom: 2rem; }
+        .service-card-img img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.7s var(--ease-out-expo);
+        }
+        .service-card:hover .service-card-img img { transform: scale(1.06); }
+        .service-card h3 {
+            font-family: var(--font-body); font-size: 1.5rem; color: var(--black);
+            margin-bottom: 1rem; display: flex; align-items: center;
+            justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-weight: 600;
+        }
+        .service-card p { color: var(--text-light); font-size: 1rem; line-height: 1.6; }
+
+        /* --- REZIDENCE --- */
+        .rezidence-sec {
+            padding: 10vh 5vw; background: var(--white);
+            min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+        }
+        .rezidence-top { display: flex; gap: 6vw; align-items: center; margin-bottom: 1.5rem; }
+        .rezidence-text { width: 50%; }
+        .rezidence-text p { color: var(--text-light); line-height: 1.7; margin-bottom: 1.5rem; font-size: 1rem; }
+        .rezidence-text p.lead { color: var(--black); font-size: 1.2rem; margin-bottom: 2rem; }
+        .rezidence-text p strong { color: var(--black); font-weight: 600; }
+
+        .rezidence-video { width: 50%; }
+        .video-wrapper {
+            position: relative; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); aspect-ratio: 16/9;
+        }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+        .rezidence-features {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem; text-align: center;
+            border-top: 1px solid var(--gray-light); padding-top: 1.5rem;
+        }
+        .feature-item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .feature-icon {
+            position: relative; font-size: 2.3rem; color: var(--black);
+            display: flex; justify-content: center; align-items: center; width: 60px; height: 60px;
+        }
+        .check-badge {
+            position: absolute; bottom: 5px; right: -5px; font-size: 0.8rem;
+            background: var(--white); color: var(--black); border-radius: 50%;
+            padding: 2px; border: 2px solid var(--white);
+        }
+        .feature-item span { font-size: 0.9rem; color: var(--black); font-weight: 500; }
+
+        /* --- KONFIGURÁTOR --- */
+        .konfigurator-sec { padding: 15vh 5vw; background: var(--white); }
+        .konfigurator-header { margin-bottom: 3rem; }
+        .konfigurator-hint { font-size: 0.9rem; color: var(--text-light); margin-top: -1rem; }
+
+        .konfigurator-wrap {
+            position: relative; width: 100%; border-radius: 20px;
+            overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+            cursor: pointer;
+        }
+        .konfigurator-img { width: 100%; display: block; pointer-events: none; }
+        .konfigurator-svg {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            overflow: visible;
+        }
+        @keyframes floorBreathe {
+            0%   { fill: rgba(255,255,255,0.12); }
+            50%  { fill: rgba(255,255,255,0.48); }
+            100% { fill: rgba(255,255,255,0.12); }
+        }
+        .konfigurator-svg polygon {
+            fill: rgba(255,255,255,0.18);
+            stroke: none;
+            cursor: pointer;
+            animation: floorBreathe 3.5s ease-in-out infinite;
+        }
+        .konfigurator-svg polygon:nth-child(1) { animation-delay: 0.0s; }
+        .konfigurator-svg polygon:nth-child(2) { animation-delay: 0.58s; }
+        .konfigurator-svg polygon:nth-child(3) { animation-delay: 1.16s; }
+        .konfigurator-svg polygon:nth-child(4) { animation-delay: 1.75s; }
+        .konfigurator-svg polygon:nth-child(5) { animation-delay: 2.33s; }
+        .konfigurator-svg polygon:nth-child(6) { animation-delay: 2.91s; }
+
+        .floor-tooltip {
+            position: absolute; background: #fff; color: var(--black);
+            padding: 14px 20px; border-radius: 14px; font-size: 0.9rem;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+            pointer-events: none; min-width: 180px;
+            opacity: 0; transition: opacity 0.2s;
+            transform: translate(-50%, calc(-100% - 16px)); z-index: 10;
+        }
+        .floor-tooltip.visible { opacity: 1; }
+        .floor-tooltip__name { font-size: 1.35rem; font-weight: 700; color: var(--black); line-height: 1.1; margin-bottom: 5px; }
+        .floor-tooltip__count { font-size: 0.9rem; font-weight: 400; color: var(--black); margin-bottom: 3px; }
+        .floor-tooltip__hint { font-size: 0.74rem; font-weight: 400; color: var(--text-light); }
+
+        /* Inline overlays */
+        .k-inline {
+            display: none; position: absolute; inset: 0; z-index: 10;
+            background: #000;
+        }
+        .k-inline.active { display: block; }
+        .k-close {
+            position: absolute; top: 1rem; right: 1rem;
+            background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+            color: #fff; width: 48px; height: 48px; border-radius: 50%;
+            font-size: 1.2rem; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .k-close:hover { background: rgba(255,255,255,0.2); }
+
+        #k-video { width: 100%; height: 100%; object-fit: cover; }
+        .k-plan-label {
+            position: absolute; top: 1.2rem; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.5); font-size: 0.75rem;
+            letter-spacing: 3px; text-transform: uppercase;
+        }
+        #k-plan-wrap {
+            position: absolute; inset: 0;
+        }
+        #k-plan-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        #k-plan-svg {
+            position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+        }
+        /* ===== APARTMENT DETAIL OVERLAY ===== */
+        /* ── APARTMENT DETAIL OVERLAY ── */
+        #apt-detail-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: #f4f4f2;
+            display: flex; flex-direction: column;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+            overflow: hidden;
+        }
+        #apt-detail-overlay.active { opacity: 1; pointer-events: all; }
+
+        /* Header */
+        .apt-modal-header {
+            position: relative;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 1.1rem 2rem; flex-shrink: 0;
+        }
+        .apt-back-btn {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(0,0,0,0.07); border: none; border-radius: 20px;
+            padding: 0.5rem 1.1rem; cursor: pointer;
+            font-family: var(--font-body); font-size: 0.88rem; color: #333;
+            transition: background 0.2s;
+        }
+        .apt-back-btn:hover { background: rgba(0,0,0,0.13); }
+        .apt-modal-code {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-size: 2.4rem; font-weight: 800; color: #111; letter-spacing: -1px;
+            pointer-events: none;
+        }
+        .apt-close-x {
+            background: none; border: none; font-size: 1.4rem; cursor: pointer;
+            color: #444; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; transition: background 0.2s;
+        }
+        .apt-close-x:hover { background: rgba(0,0,0,0.08); }
+
+        /* 3-column grid */
+        .apt-detail-grid {
+            display: grid; grid-template-columns: 1fr 370px 1fr;
+            flex: 1; overflow: hidden; padding: 0 2rem 1.5rem; gap: 2rem;
+        }
+
+        /* Left — půdorys na gradientu */
+        .apt-detail-left {
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; padding: 0.5rem 0;
+        }
+        .apt-detail-left img {
+            height: 90%; width: auto; max-width: 130%;
+            object-fit: contain;
+        }
+
+        /* Center — plovoucí tmavá karta */
+        .apt-detail-center {
+            background: #111; color: #fff;
+            border-radius: 20px; padding: 1.8rem 1.6rem;
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+        .apt-dc-price {
+            font-size: 1.85rem; font-weight: 800; color: #fff;
+            text-align: center; line-height: 1.1; margin-bottom: 0.3rem;
+        }
+        .apt-dc-monthly {
+            font-size: 0.85rem; color: rgba(255,255,255,0.5);
+            text-align: center; margin-bottom: 1.4rem;
+        }
+        .apt-dc-rows { flex: 1; }
+        .apt-dc-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.72rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.87rem;
+        }
+        .apt-dc-row:first-child { border-top: 1px solid rgba(255,255,255,0.1); }
+        .apt-dc-row-label { color: rgba(255,255,255,0.6); }
+        .apt-dc-row-val { color: #fff; font-weight: 500; }
+        .apt-status-pill {
+            padding: 3px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 600;
+        }
+        .apt-status-pill.green  { background: #dcfce7; color: #14532d; }
+        .apt-status-pill.yellow { background: #fef9c3; color: #713f12; }
+        .apt-status-pill.orange { background: #fef3c7; color: #92400e; }
+        .apt-status-pill.red    { background: #fee2e2; color: #7f1d1d; }
+
+        .apt-dc-actions { margin-top: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .apt-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+        .apt-btn-dark {
+            background: var(--black); color: var(--white);
+            border: 1px solid var(--black); border-radius: 30px;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-body); font-size: 0.88rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s; text-align: center;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+        }
+        .apt-btn-dark:hover { background: var(--white); color: var(--black); }
+
+        /* Right — galerie na gradientu */
+        .apt-detail-right {
+            display: flex; flex-direction: column; gap: 0.8rem; overflow: hidden; padding: 0.5rem 0;
+        }
+        .apt-gallery-main {
+            position: relative; flex: 1;
+            border-radius: 16px; overflow: hidden; background: #ddd; min-height: 200px;
+        }
+        .apt-gallery-main img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        .apt-gallery-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
+            width: 38px; height: 38px; font-size: 1.3rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15); transition: background 0.2s;
+        }
+        .apt-gallery-nav:hover { background: #fff; }
+        .apt-gallery-prev { left: 0.75rem; }
+        .apt-gallery-next { right: 0.75rem; }
+        .apt-gallery-thumbs {
+            display: flex; gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto;
+        }
+        .apt-gallery-thumb {
+            width: 80px; height: 58px; object-fit: cover;
+            border-radius: 10px; cursor: pointer; opacity: 0.55;
+            transition: opacity 0.2s; flex-shrink: 0; border: 2.5px solid transparent;
+        }
+        .apt-gallery-thumb.active { opacity: 1; border-color: #2ecc71; }
+        .apt-gallery-note { font-size: 0.75rem; color: #666; }
+
+        @media (max-width: 900px) {
+            .apt-detail-grid { grid-template-columns: 1fr; overflow-y: auto; }
+            .apt-modal-code { font-size: 1.6rem; }
+        }
+
+        @media (max-width: 900px) {
+            .apt-detail-grid { grid-template-columns: 1fr; }
+            .apt-detail-left { min-height: 40vh; }
+            .apt-detail-center { min-height: auto; }
+        }
+        /* ===================================== */
+
+        @keyframes aptBreatheGreen  { 0%,100% { fill: rgba(22,163,74,0.15);  } 50% { fill: rgba(22,163,74,0.5);  } }
+        @keyframes aptBreatheYellow { 0%,100% { fill: rgba(202,138,4,0.15); } 50% { fill: rgba(202,138,4,0.5); } }
+        @keyframes aptBreatheOrange { 0%,100% { fill: rgba(217,119,6,0.15); } 50% { fill: rgba(217,119,6,0.5); } }
+        @keyframes aptBreatheRed    { 0%,100% { fill: rgba(220,38,38,0.15); } 50% { fill: rgba(220,38,38,0.5); } }
+
+        #k-plan-svg .apt-poly {
+            stroke: none; cursor: pointer;
+            animation-duration: 3.5s;
+            animation-timing-function: ease-in-out;
+            animation-iteration-count: infinite;
+            animation-fill-mode: backwards;
+        }
+        #k-plan-svg .apt-poly.status-green  { animation-name: aptBreatheGreen; }
+        #k-plan-svg .apt-poly.status-yellow { animation-name: aptBreatheYellow; }
+        #k-plan-svg .apt-poly.status-orange { animation-name: aptBreatheOrange; }
+        #k-plan-svg .apt-poly.status-red    { animation-name: aptBreatheRed; }
+        .k-apt-tooltip {
+            display: none; position: absolute;
+            background: #fff; color: var(--text-main);
+            font-family: var(--font-body);
+            padding: 1rem 1.3rem; border-radius: 16px; pointer-events: none;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+            min-width: 220px; z-index: 20;
+        }
+        .k-apt-tooltip.visible { display: block; }
+        .k-apt-tooltip__code {
+            font-size: 1.2rem; font-weight: 700; color: var(--black); margin-bottom: 0.35rem;
+        }
+        .k-apt-tooltip__row {
+            font-size: 0.88rem; color: #444; margin-bottom: 0.15rem;
+        }
+        .k-apt-tooltip__hint {
+            font-size: 0.75rem; color: #999; margin-top: 0.4rem;
+        }
+        .k-back-btn {
+            position: absolute; top: 1rem; left: 1rem;
+            background: #fff; border: none; border-radius: 999px;
+            padding: 0.6rem 1.4rem; font-size: 0.95rem; font-family: var(--font-body);
+            font-weight: 500; color: var(--black); cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+            transition: background 0.2s, transform 0.2s;
+            white-space: nowrap;
+        }
+        .k-back-btn:hover { background: var(--gray-light); transform: scale(1.04); }
+
+        /* --- SEZNAM BYTŮ --- */
+        .pricelist-sec { padding: 15vh 5vw; background: var(--gray-light); }
+        .pricelist-title {
+            font-family: var(--font-heading); font-size: clamp(3rem, 5vw, 4.5rem);
+            color: var(--black); margin-bottom: 2rem; font-weight: 600;
+        }
+
+        .filter-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 2.5rem; }
+        .filter-pill {
+            background: var(--white); border: 1px solid var(--gray);
+            padding: 9px 22px; border-radius: 30px; font-family: var(--font-body);
+            font-size: 0.9rem; color: var(--black); font-weight: 500;
+            cursor: pointer; transition: all 0.25s;
+        }
+        .filter-pill:hover,
+        .filter-pill.active { border-color: var(--black); background: var(--black); color: var(--white); }
+
+        .table-wrapper {
+            width: 100%; overflow-x: auto; background: var(--white);
+            border-radius: 16px; border: 1px solid rgba(0,0,0,0.07);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.05);
+        }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; text-align: left; }
+        thead { border-bottom: 1px solid rgba(0,0,0,0.08); }
+        th {
+            padding: 14px 20px; font-size: 0.72rem; font-weight: 700;
+            color: var(--text-light); text-transform: uppercase; letter-spacing: 1.2px;
+            white-space: nowrap; background: var(--white);
+        }
+        th[data-col] { cursor: pointer; user-select: none; transition: color 0.2s; }
+        th[data-col]:hover { color: var(--black); }
+        th .sort-icon { font-size: 0.7rem; margin-left: 4px; }
+        th.sorted-asc .sort-icon::before { content: "↑"; color: var(--black); }
+        th.sorted-desc .sort-icon::before { content: "↓"; color: var(--black); }
+        td {
+            padding: 16px 20px; font-size: 0.93rem; font-weight: 500;
+            color: var(--black); border-bottom: 1px solid rgba(0,0,0,0.05);
+            vertical-align: middle; white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr.hidden-row { display: none; }
+        tr:hover td { background-color: #f7f7f7; }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-weight: 600; font-size: 0.82rem; padding: 5px 13px;
+            border-radius: 20px; white-space: nowrap;
+        }
+        .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; display: block; flex-shrink: 0; }
+        .status-badge.orange { color: #92400e; background: #fef3c7; }
+        .status-badge.orange::before { background: #d97706; }
+        .status-badge.green { color: #14532d; background: #dcfce7; }
+        .status-badge.green::before { background: #16a34a; }
+        .status-badge.yellow { color: #713f12; background: #fef9c3; }
+        .status-badge.yellow::before { background: #ca8a04; }
+        .status-badge.red { color: #7f1d1d; background: #fee2e2; }
+        .status-badge.red::before { background: #dc2626; }
+
+        .btn-zobrazit {
+            display: inline-block; background: var(--black); color: var(--white);
+            padding: 8px 20px; border-radius: 30px; text-decoration: none;
+            font-size: 0.8rem; font-weight: 600; transition: all 0.25s; white-space: nowrap;
+        }
+        .btn-zobrazit:hover { background: var(--text-light); }
+
+        .table-empty {
+            text-align: center; padding: 3rem; color: var(--text-light);
+            font-size: 1rem; display: none;
+        }
+
+        .load-more-btn {
+            background: transparent; border: 1.5px solid var(--black); color: var(--black);
+            border-radius: 999px; padding: .75rem 2.5rem; font-family: 'Jost', sans-serif;
+            font-size: .85rem; font-weight: 500; letter-spacing: 1px; cursor: pointer;
+            transition: background .2s, color .2s;
+        }
+        .load-more-btn:hover { background: var(--black); color: var(--white); }
+
+        /* --- LOKALITA --- */
+        .location-sec { padding: 15vh 5vw; background: var(--white); }
+        .map-wrapper {
+            width: 100%; height: 70vh; overflow: hidden; position: relative;
+            margin: 3rem 0 5rem; border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .map-wrapper iframe { width: 100%; height: 100%; border: none; border-radius: 20px; }
+
+        .poi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 3rem; }
+        .poi-item { display: flex; align-items: flex-start; gap: 20px; }
+        .poi-icon {
+            width: 50px; height: 50px; background: var(--gray-light); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--black); font-size: 1.2rem; flex-shrink: 0; border: 1px solid var(--gray);
+            transition: all 0.3s;
+        }
+        .poi-item:hover .poi-icon { background: var(--black); color: var(--white); border-color: var(--black); }
+        .poi-text h4 { font-family: var(--font-body); font-size: 1.1rem; margin-bottom: 5px; color: var(--black); font-weight: 600; }
+        .poi-text p { font-size: 0.9rem; color: var(--text-light); line-height: 1.5; }
+
+        /* --- FINANCOVÁNÍ --- */
+        .finance-sec {
+            display: flex; padding: 15vh 5vw; background: var(--white);
+            gap: 6vw; align-items: stretch; border-top: 1px solid var(--gray-light);
+        }
+        .finance-left { width: 50%; display: flex; flex-direction: column; }
+        .finance-left p.lead { font-size: 1.1rem; line-height: 1.7; margin-bottom: 2rem; color: var(--text-light); font-weight: 400; }
+        .finance-left p.lead strong { color: var(--black); font-weight: 600; }
+
+        .finance-list { list-style: none; margin-bottom: 3rem; padding-left: 0; }
+        .finance-list li {
+            position: relative; padding-left: 20px; margin-bottom: 15px;
+            font-size: 0.95rem; color: var(--text-light); line-height: 1.5;
+        }
+        .finance-list li::before {
+            content: ''; position: absolute; left: 0; top: 8px;
+            width: 6px; height: 6px; border-radius: 50%; background: var(--black);
+        }
+
+        .finance-banner {
+            background: var(--gray-light); border-radius: 10px; padding: 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            position: relative; overflow: hidden; margin-top: auto;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .banner-text { font-size: 1.2rem; color: var(--text-light); line-height: 1.4; z-index: 2; position: relative; }
+        .banner-text strong { color: var(--black); font-weight: 700; }
+        .banner-img {
+            position: absolute; right: 0; bottom: 0; height: 100%; width: 50%;
+            object-fit: cover; opacity: 0.6; mix-blend-mode: multiply;
+            mask-image: linear-gradient(to right, transparent, black 30%);
+            -webkit-mask-image: linear-gradient(to right, transparent, black 30%); z-index: 1;
+        }
+
+        .finance-right {
+            width: 50%; background: linear-gradient(135deg, var(--white) 0%, var(--gray-light) 100%);
+            border-radius: 20px; padding: 3rem 4rem;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .finance-right h3 { font-family: var(--font-body); font-size: 1.8rem; margin-bottom: 2.5rem; color: var(--black); font-weight: 600; }
+
+        .calc-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;
+        }
+        .calc-label { font-size: 0.95rem; color: var(--text-light); font-weight: 500; }
+        .calc-controls { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 30px; }
+        .calc-btn {
+            width: 35px; height: 35px; border-radius: 50%; border: none;
+            background: var(--white); box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+            cursor: pointer; font-size: 1.2rem; display: flex; justify-content: center;
+            align-items: center; transition: all 0.2s; color: var(--black);
+        }
+        .calc-btn:hover { background: var(--gray); transform: scale(1.1); }
+        .calc-input-wrapper { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: 1rem; width: 130px; justify-content: flex-end; }
+        .calc-input {
+            border: none; background: transparent; font-weight: 600; font-size: 1rem;
+            text-align: right; width: 95px; outline: none;
+            font-family: var(--font-body); color: var(--black);
+        }
+        .calc-input::-webkit-outer-spin-button,
+        .calc-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .calc-input[type=number] { -moz-appearance: textfield; }
+
+        .calc-result-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 3rem; margin-bottom: 1rem; }
+        .calc-result-label { font-size: 1rem; color: var(--text-light); }
+        .calc-result-value { font-size: 2.5rem; font-weight: 700; color: var(--black); line-height: 1; }
+
+        .calc-rate-row { display: flex; justify-content: space-between; margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--text-light); }
+        .calc-rate-val { font-weight: 700; color: var(--black); }
+        .calc-disclaimer { font-size: 0.75rem; color: var(--text-light); line-height: 1.5; margin-bottom: 2rem; }
+
+        .btn-calc {
+            width: 100%; background: var(--black); color: var(--white); border: none;
+            padding: 18px; border-radius: 10px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; transition: all 0.3s; font-family: var(--font-body);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-calc:hover { background: var(--text-light); transform: translateY(-2px); }
+
+        /* --- KONTAKT --- */
+        .contact-sec {
+            padding: 15vh 5vw; background: var(--black);
+            color: var(--gray-light); display: flex; gap: 8vw;
+        }
+        .contact-sec .sec-title { color: var(--white); }
+        .contact-sec .subtitle { color: var(--gray); }
+        .form-half { width: 60%; }
+        .info-half {
+            width: 40%; display: flex; flex-direction: column; justify-content: center;
+            background: rgba(255,255,255,0.03); padding: 4rem;
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 20px;
+        }
+
+        .form-group { margin-bottom: 2rem; }
+        .form-label { display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; color: var(--gray); margin-bottom: 10px; font-weight: 500; }
+        .form-control {
+            width: 100%; padding: 18px 0; background: transparent; border: none;
+            border-bottom: 1px solid rgba(255,255,255,0.2); color: var(--white);
+            font-family: var(--font-body); font-size: 1rem; transition: border-color 0.3s;
+        }
+        .form-control:focus { outline: none; border-color: var(--white); }
+        textarea.form-control { height: 100px; resize: none; }
+
+        .form-success {
+            display: none; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 1.5rem; margin-top: 1.5rem;
+            color: var(--white); font-size: 0.95rem; text-align: center;
+        }
+
+        .btn-submit {
+            background: var(--white); color: var(--black); border: none;
+            padding: 18px 35px; border-radius: 30px; font-weight: 700;
+            font-size: 0.95rem; cursor: pointer;
+            transition: all 0.3s var(--ease-out-expo); font-family: var(--font-body);
+            margin-top: 1rem; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-submit:hover { background: var(--gray); transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255,255,255,0.1); }
+
+        .agent-info { text-align: center; }
+        .agent-photo {
+            width: 130px; height: 130px; border-radius: 50%; object-fit: cover;
+            margin: 0 auto 2rem auto; border: 2px solid rgba(255,255,255,0.15); display: block;
+            transition: transform 0.4s var(--ease-out-expo);
+        }
+        .agent-photo:hover { transform: scale(1.05); }
+        .agent-name { font-size: 1.4rem; font-weight: 600; margin-bottom: 5px; color: var(--white); }
+        .agent-title { font-size: 0.9rem; color: var(--gray); margin-bottom: 2.5rem; display: block; }
+        .agent-contact-link {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            text-decoration: none; color: var(--white); font-size: 1rem;
+            margin-bottom: 15px; font-weight: 500; transition: color 0.3s;
+        }
+        .agent-contact-link:hover { color: var(--gray); }
+        .agent-contact-link i { font-size: 0.9rem; color: var(--gray-dark); }
+
+        /* --- LANGUAGE SWITCHER --- */
+        .lang-switcher { display: flex; gap: 2px; align-items: center; margin-left: 0.8rem; }
+        .lang-btn {
+            background: none; border: none; cursor: pointer;
+            font-family: var(--font-body); font-size: 0.72rem; font-weight: 600;
+            color: var(--text-light); padding: 4px 6px;
+            transition: color 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .lang-btn:hover { color: var(--black); }
+        .lang-btn.active { color: var(--black); text-decoration: underline; text-underline-offset: 3px; }
+        .lang-sep { color: var(--gray); font-size: 0.65rem; line-height: 1; }
+
+        /* --- FOOTER --- */
+        footer {
+            padding: 4rem 5vw; background: #080808; color: var(--gray-dark);
+            text-align: center; border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .footer-logo {
+            font-family: var(--font-heading); font-size: 1.1rem; color: var(--white);
+            letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1.5rem;
+            display: block; text-decoration: none;
+        }
+        .footer-logo:hover { color: var(--gray-dark); }
+        .copyright { font-size: 0.8rem; }
+
+        /* --- RESPONSIVITA --- */
+        @media (max-width: 1024px) {
+            .contact-sec { flex-direction: column; gap: 5rem; }
+            .form-half, .info-half { width: 100%; padding-right: 0; }
+            h2.sec-title { font-size: 2.5rem; }
+            nav { display: none; }
+            .hamburger { display: flex; }
+            .mobile-nav { display: flex; }
+
+            .sticky-wrapper { grid-template-columns: 1fr; gap: 3rem; }
+            .sticky-content { position: relative; top: 0; padding-bottom: 0; }
+
+            .rezidence-top { flex-direction: column; gap: 3rem; }
+            .rezidence-text, .rezidence-video { width: 100%; }
+            .rezidence-features { grid-template-columns: repeat(2, 1fr); gap: 3rem 1.5rem; }
+            .rezidence-sec { min-height: auto; }
+
+            .finance-sec { flex-direction: column; gap: 5rem; }
+            .finance-left, .finance-right { width: 100%; }
+            .finance-right { padding: 2.5rem 1.5rem; }
+            .calc-row { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .calc-controls { width: 100%; justify-content: space-between; }
+            .banner-img { opacity: 0.3; }
+
+            .info-half { padding: 2.5rem; }
+        }
+
+        @media (max-width: 600px) {
+            .hero-title { letter-spacing: 5px; }
+            .pricelist-title { font-size: 2.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PRELOADER: Black expands from top & bottom edges to fill screen -->
+    <div id="preloader">
+        <div class="pre-panel pre-panel-top"></div>
+        <div class="pre-panel pre-panel-bottom"></div>
+        <div class="intro-text-wrapper">
+            <div class="intro-text t1" data-i18n="pre1">Prémiová lokalita</div>
+            <div class="intro-text t2" data-i18n="pre2">Prémiové materiály</div>
+            <div class="intro-text t3" data-i18n="pre3">Prémiové bydlení</div>
+        </div>
+        <div class="intro-progress-wrap" id="intro-progress-wrap">
+            <div class="intro-progress-bar">
+                <div class="intro-progress-fill" id="intro-progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scroll-progress"></div>
+
+    <!-- Mobile nav overlay -->
+    <div class="mobile-nav" id="mobile-nav">
+        <a href="#konfigurator" onclick="closeMobileNav()" data-i18n="nav_apts">Výběr bytů</a>
+        <a href="#lokalita" onclick="closeMobileNav()" data-i18n="nav_loc">Lokalita</a>
+        <a href="#financovani" onclick="closeMobileNav()" data-i18n="nav_fin">Financování</a>
+        <a href="#kontakt" class="btn-header" onclick="closeMobileNav()" data-i18n="nav_contact">Kontakt</a>
+        <div class="lang-switcher" style="margin-top:1rem;">
+            <button class="lang-btn active" data-lang="cs" onclick="applyLang('cs');closeMobileNav()" style="color:#fff;font-size:1rem;">CS</button>
+            <span class="lang-sep" style="color:#555;">|</span>
+            <button class="lang-btn" data-lang="en" onclick="applyLang('en');closeMobileNav()" style="color:#fff;font-size:1rem;">EN</button>
+            <span class="lang-sep" style="color:#555;">|</span>
+            <button class="lang-btn" data-lang="de" onclick="applyLang('de');closeMobileNav()" style="color:#fff;font-size:1rem;">DE</button>
+        </div>
+    </div>
+
+    <header id="main-header">
+        <a href="#" class="logo">GRAN VIA<span>RESIDENCES</span></a>
+        <nav id="main-nav">
+            <a href="#konfigurator" data-i18n="nav_apts">Výběr bytů</a>
+            <a href="#lokalita" data-i18n="nav_loc">Lokalita</a>
+            <a href="#financovani" data-i18n="nav_fin">Financování</a>
+            <a href="#kontakt" class="btn-header" data-i18n="nav_contact">Kontakt</a>
+        </nav>
+        <div class="lang-switcher">
+            <button class="lang-btn active" data-lang="cs" onclick="applyLang('cs')">CS</button>
+            <span class="lang-sep">|</span>
+            <button class="lang-btn" data-lang="en" onclick="applyLang('en')">EN</button>
+            <span class="lang-sep">|</span>
+            <button class="lang-btn" data-lang="de" onclick="applyLang('de')">DE</button>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Otevřít menu">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+
+    <section class="hero">
+        <div class="hero-bg" id="hero-bg"></div>
+        <div class="hero-content">
+            <svg class="hero-title-svg" viewBox="0 0 320 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18,58 L18,32 Q80,8 160,4 Q240,8 302,32 L302,58"
+                      stroke="#ffffff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1 class="hero-title" id="hero-title">GRAN VIA</h1>
+        </div>
+        <div class="hero-scroll-hint" id="hero-scroll-hint">
+            <span data-i18n="hero_scroll">Přejít níže</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <section class="scroll-text-sec">
+        <p class="highlight-text" id="scrub-text">Gran Via je projekt, kde moderní architektura odpovídá nejvyšším evropským standardům, každý detail je promyšlen do posledního centimetru a bydlení se stává skutečným zážitkem. Residence nového standardu pro ty, kdo nechtějí kompromis.</p>
+    </section>
+
+    <section id="rezidence-detail" class="rezidence-sec">
+        <div class="rezidence-top">
+            <div class="rezidence-text">
+                <h2 class="sec-title gsap-reveal" data-i18n-html="rez_title">Nový standard<br><span style="color: var(--text-light);">bydlení</span></h2>
+                <p class="lead gsap-reveal" data-i18n-html="rez_lead">Vítejte v projektu Gran Via Residences. <strong>Prémiové bydlení pro ty, kdo nechtějí kompromis.</strong></p>
+                <p class="gsap-reveal" data-i18n="rez_p1">Gran Via Residences nabízí exkluzivní bytové jednotky v prémiové lokalitě s výhledem do okolní krajiny. Každá nemovitost je navržena s důrazem na prostornost, přirozené světlo a dokonalé technické vybavení odpovídající nejvyšším evropským standardům.</p>
+                <p class="gsap-reveal" data-i18n="rez_p2">Každá rezidence disponuje podlahovým vytápěním, řízeným větráním s rekuperací, systémem pro chytrou domácnost a soukromým parkováním. Kvalita provedení a výběr materiálů jsou pečlivě vybrány pro maximální životnost a estetiku.</p>
+                <p class="gsap-reveal" style="margin-top: 2rem;" data-i18n-html="rez_p3">Nabízíme různé dispozice od kompaktních bytů po prostorné vily. <strong>Vyberte si ten svůj.</strong></p>
+            </div>
+            <div class="rezidence-video gsap-reveal" style="transition-delay: 0.3s">
+                <div class="video-wrapper">
+                    <iframe src="https://www.youtube.com/embed/y9j-BL5ocW8?rel=0" title="YouTube video nemovitosti" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="rezidence-features gsap-reveal" style="transition-delay: 0.5s">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fa-solid fa-location-dot"></i><i class="fa-solid fa-check check-badge"></i></div>
+                <span data-i18n="feat_loc">Prémiová lokalita</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fa-regular fa-building"></i><i class="fa-solid fa-check check-badge"></i></div>
+                <span data-i18n="feat_reco">Nová výstavba</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fa-solid fa-square-parking"></i></div>
+                <span data-i18n="feat_park">Soukromá garáž</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fa-solid fa-vector-square"></i></div>
+                <span data-i18n="feat_space">Velkorysé dispozice</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fa-solid fa-wind"></i></div>
+                <span data-i18n="feat_clim">Podlahové vytápění</span>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fa-solid fa-globe"></i></div>
+                <span data-i18n="feat_net">Optická přípojka</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== VÝBĚR BYTŮ ===== -->
+    <section id="konfigurator" class="konfigurator-sec">
+        <div class="konfigurator-header gsap-reveal">
+            <span class="subtitle" data-i18n="conf_sub">Průvodce projektem</span>
+            <h2 class="sec-title" data-i18n="conf_title">Výběr rezidencí</h2>
+            <p class="konfigurator-hint" data-i18n="conf_hint">Klikněte na patro budovy pro zobrazení podrobností</p>
+        </div>
+        <div class="konfigurator-wrap gsap-reveal">
+            <img src="hero.jpg" class="konfigurator-img" alt="Budova">
+            <svg class="konfigurator-svg" id="konfigurator-svg"
+                 viewBox="0 0 100 100" preserveAspectRatio="none"
+                 xmlns="http://www.w3.org/2000/svg"></svg>
+            <div class="floor-tooltip" id="floor-tooltip"></div>
+
+            <!-- Inline video -->
+            <div class="k-inline" id="k-video-overlay">
+                <video id="k-video" playsinline></video>
+            </div>
+
+            <!-- Inline floor plan -->
+            <div class="k-inline" id="k-plan-overlay">
+                <span class="k-plan-label" id="k-plan-label"></span>
+                <div id="k-plan-wrap">
+                    <img id="k-plan-img" alt="Půdorys">
+                    <svg id="k-plan-svg" viewBox="0 0 100 100" preserveAspectRatio="none"
+                         xmlns="http://www.w3.org/2000/svg"></svg>
+                    <div class="k-apt-tooltip" id="k-apt-tooltip"></div>
+                </div>
+                <button class="k-back-btn" id="k-back-btn" data-i18n="back_btn">Zpět</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="cenik" class="pricelist-sec">
+        <div class="pricelist-header">
+            <h2 class="pricelist-title gsap-reveal" data-i18n="price_title">Byty</h2>
+            <div class="filter-pills gsap-reveal" style="transition-delay: 0.1s" id="filter-pills">
+                <button class="filter-pill active" data-filter="all" data-i18n="f_all">Vše</button>
+                <button class="filter-pill" data-filter="green" data-i18n="f_avail">Dostupné</button>
+                <button class="filter-pill" data-filter="yellow" data-i18n="f_res_s">Zamluveno</button>
+                <button class="filter-pill" data-filter="orange" data-i18n="f_res">Rezervováno</button>
+                <button class="filter-pill" data-filter="red" data-i18n="f_sold">Prodáno</button>
+            </div>
+        </div>
+        <div class="table-wrapper gsap-reveal" style="transition-delay: 0.2s">
+            <table id="price-table">
+                <thead>
+                    <tr>
+                        <th data-col="0"><span data-i18n="th0">Kód</span> <span class="sort-icon"></span></th>
+                        <th data-col="1"><span data-i18n="th1">Podlaží</span> <span class="sort-icon"></span></th>
+                        <th data-col="2"><span data-i18n="th2">Dispozice</span> <span class="sort-icon"></span></th>
+                        <th data-col="3"><span data-i18n="th3">Užitná plocha</span> <span class="sort-icon"></span></th>
+                        <th data-col="4"><span data-i18n="th4">Lodžie</span> <span class="sort-icon"></span></th>
+                        <th data-col="5"><span data-i18n="th5">Celková plocha</span> <span class="sort-icon"></span></th>
+                        <th data-col="6"><span data-i18n="th6">Park. stání</span> <span class="sort-icon"></span></th>
+                        <th data-col="7"><span data-i18n="th7">Cena</span> <span class="sort-icon"></span></th>
+                        <th><span data-i18n="th8">Stav</span></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <tr data-status="orange">
+                        <td><strong>GV-101</strong></td><td>1. NP</td><td>3+kk</td><td>82,5 m²</td><td>12,3 m²</td><td>94,8 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="330 000" data-czk="8 250 000"><strong>8 250 000 Kč</strong></td>
+                        <td><span class="status-badge orange">Rezervováno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-102</strong></td><td>1. NP</td><td>3+kk</td><td>76,1 m²</td><td>10,8 m²</td><td>86,9 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="304 000" data-czk="7 610 000"><strong>7 610 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="red">
+                        <td><strong>GV-103</strong></td><td>1. NP</td><td>2+kk</td><td>54,3 m²</td><td>8,2 m²</td><td>62,5 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="217 000" data-czk="5 430 000"><strong>5 430 000 Kč</strong></td>
+                        <td><span class="status-badge red">Prodáno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-104</strong></td><td>1. NP</td><td>2+kk</td><td>58,7 m²</td><td>9,1 m²</td><td>67,8 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="235 000" data-czk="5 870 000"><strong>5 870 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-201</strong></td><td>2. NP</td><td>3+kk</td><td>83,1 m²</td><td>12,5 m²</td><td>95,6 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="342 000" data-czk="8 560 000"><strong>8 560 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="orange">
+                        <td><strong>GV-202</strong></td><td>2. NP</td><td>3+kk</td><td>76,8 m²</td><td>11,0 m²</td><td>87,8 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="316 000" data-czk="7 910 000"><strong>7 910 000 Kč</strong></td>
+                        <td><span class="status-badge orange">Rezervováno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-203</strong></td><td>2. NP</td><td>2+kk</td><td>54,9 m²</td><td>8,4 m²</td><td>63,3 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="226 000" data-czk="5 650 000"><strong>5 650 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="yellow">
+                        <td><strong>GV-204</strong></td><td>2. NP</td><td>2+kk</td><td>59,2 m²</td><td>9,3 m²</td><td>68,5 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="244 000" data-czk="6 090 000"><strong>6 090 000 Kč</strong></td>
+                        <td><span class="status-badge yellow">Zamluveno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-301</strong></td><td>3. NP</td><td>3+kk</td><td>83,1 m²</td><td>12,5 m²</td><td>95,6 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="352 000" data-czk="8 810 000"><strong>8 810 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="red">
+                        <td><strong>GV-302</strong></td><td>3. NP</td><td>3+kk</td><td>76,8 m²</td><td>11,0 m²</td><td>87,8 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="326 000" data-czk="8 140 000"><strong>8 140 000 Kč</strong></td>
+                        <td><span class="status-badge red">Prodáno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-303</strong></td><td>3. NP</td><td>2+kk</td><td>54,9 m²</td><td>8,4 m²</td><td>63,3 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="233 000" data-czk="5 820 000"><strong>5 820 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-304</strong></td><td>3. NP</td><td>2+kk</td><td>59,2 m²</td><td>9,3 m²</td><td>68,5 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="251 000" data-czk="6 270 000"><strong>6 270 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="orange">
+                        <td><strong>GV-401</strong></td><td>4. NP</td><td>3+kk</td><td>83,1 m²</td><td>12,5 m²</td><td>95,6 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="364 000" data-czk="9 100 000"><strong>9 100 000 Kč</strong></td>
+                        <td><span class="status-badge orange">Rezervováno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-402</strong></td><td>4. NP</td><td>3+kk</td><td>76,8 m²</td><td>11,0 m²</td><td>87,8 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="338 000" data-czk="8 450 000"><strong>8 450 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="yellow">
+                        <td><strong>GV-403</strong></td><td>4. NP</td><td>2+kk</td><td>54,9 m²</td><td>8,4 m²</td><td>63,3 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="242 000" data-czk="6 040 000"><strong>6 040 000 Kč</strong></td>
+                        <td><span class="status-badge yellow">Zamluveno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-404</strong></td><td>4. NP</td><td>2+kk</td><td>59,2 m²</td><td>9,3 m²</td><td>68,5 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="260 000" data-czk="6 510 000"><strong>6 510 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-501</strong></td><td>5. NP</td><td>3+kk</td><td>83,1 m²</td><td>12,5 m²</td><td>95,6 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="378 000" data-czk="9 450 000"><strong>9 450 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-502</strong></td><td>5. NP</td><td>3+kk</td><td>76,8 m²</td><td>11,0 m²</td><td>87,8 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="350 000" data-czk="8 750 000"><strong>8 750 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="orange">
+                        <td><strong>GV-503</strong></td><td>5. NP</td><td>2+kk</td><td>54,9 m²</td><td>8,4 m²</td><td>63,3 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="251 000" data-czk="6 280 000"><strong>6 280 000 Kč</strong></td>
+                        <td><span class="status-badge orange">Rezervováno</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-504</strong></td><td>5. NP</td><td>2+kk</td><td>59,2 m²</td><td>9,3 m²</td><td>68,5 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="270 000" data-czk="6 740 000"><strong>6 740 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-601</strong></td><td>6. NP</td><td>3+kk</td><td>83,1 m²</td><td>12,5 m²</td><td>95,6 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="378 000" data-czk="9 450 000"><strong>9 450 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-602</strong></td><td>6. NP</td><td>3+kk</td><td>76,8 m²</td><td>11,0 m²</td><td>87,8 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="350 000" data-czk="8 750 000"><strong>8 750 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                    <tr data-status="green">
+                        <td><strong>GV-603</strong></td><td>6. NP</td><td>2+kk</td><td>54,9 m²</td><td>8,4 m²</td><td>63,3 m²</td><td>1</td>
+                        <td class="price-cell" data-eur="251 000" data-czk="6 280 000"><strong>6 280 000 Kč</strong></td>
+                        <td><span class="status-badge green">Dostupné</span></td>
+                        <td><a href="#kontakt" class="btn-zobrazit">Zobrazit</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="table-empty" id="table-empty" data-i18n="table_empty">Žádné byty neodpovídají vybranému filtru.</p>
+        <div id="load-more-wrap" style="display:none;text-align:center;padding:2.5rem 0 1rem">
+            <button id="load-more-btn" class="load-more-btn">Načíst další</button>
+        </div>
+    </section>
+
+    <section class="benefits-sec" id="benefity">
+        <div class="sticky-wrapper">
+            <div class="sticky-content gsap-reveal">
+                <span class="subtitle" data-i18n="ben_sub">Provedení a standardy</span>
+                <h2 class="sticky-content__title" data-i18n="ben_title">Komfort bez kompromisů</h2>
+                <p class="sticky-content__text" data-i18n="ben_text">Každá rezidence Gran Via je navržena tak, aby splňovala nejvyšší nároky na komfort, technologie i estetiku. Od interiérových materiálů po chytré systémy řízení domu — kvalita je na prvním místě.</p>
+                <a href="#konfigurator" class="btn-dark" data-i18n="ben_btn">Výběr rezidencí</a>
+            </div>
+            <div class="scrolling-cards">
+                <article class="service-card gsap-reveal">
+                    <div class="service-card-img">
+                        <img src="viz-01.jpg" alt="Chytrá domácnost" loading="lazy">
+                    </div>
+                    <h3 data-i18n="card1_title">Chytrý dům</h3>
+                    <p data-i18n="card1_text">Každá rezidence je připravena na plnou integraci moderních systémů řízení domu. Vytápění, osvětlení, zabezpečení i stínění ovládáte z jediného zařízení odkudkoli na světě.</p>
+                </article>
+                <article class="service-card gsap-reveal">
+                    <div class="service-card-img">
+                        <img src="https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&w=800&q=80" alt="Prémiové materiály" loading="lazy">
+                    </div>
+                    <h3 data-i18n="card2_title">Prvotřídní materiály</h3>
+                    <p data-i18n="card2_text">Masivní dřevěné podlahy, velkoformátová přírodní dlažba, prémiová sanitární technika evropských značek. Každý detail byl vybrán s ohledem na kvalitu, životnost a nadčasový design.</p>
+                </article>
+                <article class="service-card gsap-reveal">
+                    <div class="service-card-img">
+                        <img src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80" alt="Soukromí a klid" loading="lazy">
+                    </div>
+                    <h3 data-i18n="card3_title">Soukromí a prostor</h3>
+                    <p data-i18n="card3_text">Architektonické řešení každé rezidence zajišťuje naprosté soukromí. Vlastní terasa nebo zahrada, oddělené vstupy a promyšlené dispozice — klid je zde samozřejmostí, ne výjimkou.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="lokalita" class="location-sec">
+        <span class="subtitle gsap-reveal" data-i18n="loc_sub">Okolí a dostupnost</span>
+        <h2 class="sec-title gsap-reveal" data-i18n="loc_title">Gran Via: Adresa prestiže</h2>
+        <div class="map-wrapper gsap-reveal">
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d10427.60019624882!2d18.353721!3d49.5383!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47142c0f6fa0a9c3%3A0x40a7bc0b09c4e4f6!2sČeladná!5e0!3m2!1scs!2scz!4v1680000000000!5m2!1scs!2scz"
+                allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Mapa Čeladná">
+            </iframe>
+        </div>
+        <div class="poi-grid">
+            <div class="poi-item gsap-reveal">
+                <div class="poi-icon"><i class="fa-solid fa-golf-ball-tee"></i></div>
+                <div class="poi-text">
+                    <h4 data-i18n="poi1_title">Golf & Country Club</h4>
+                    <p data-i18n="poi1_text">Prestižní 18-jamkové hřiště s panoramatickým výhledem v docházkové vzdálenosti.</p>
+                </div>
+            </div>
+            <div class="poi-item gsap-reveal" style="transition-delay: 0.1s">
+                <div class="poi-icon"><i class="fa-solid fa-person-skiing"></i></div>
+                <div class="poi-text">
+                    <h4 data-i18n="poi2_title">Lyžařské středisko</h4>
+                    <p data-i18n="poi2_text">Moderní ski resort s upravenou sítí sjezdovek pouhých 8 minut jízdy.</p>
+                </div>
+            </div>
+            <div class="poi-item gsap-reveal" style="transition-delay: 0.2s">
+                <div class="poi-icon"><i class="fa-solid fa-utensils"></i></div>
+                <div class="poi-text">
+                    <h4 data-i18n="poi3_title">Fine dining & bistro</h4>
+                    <p data-i18n="poi3_text">Restaurace oceněné mezinárodními gurmánskými průvodci v centru čtvrti.</p>
+                </div>
+            </div>
+            <div class="poi-item gsap-reveal" style="transition-delay: 0.3s">
+                <div class="poi-icon"><i class="fa-solid fa-spa"></i></div>
+                <div class="poi-text">
+                    <h4 data-i18n="poi4_title">Wellness & Spa</h4>
+                    <p data-i18n="poi4_text">Exkluzivní wellness centrum s bazénem, saunami a relaxační zónou přímo v projektu.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="financovani" class="finance-sec">
+        <div class="finance-left">
+            <h2 class="sec-title gsap-reveal" data-i18n="fin_title">Financování</h2>
+            <p class="lead gsap-reveal" data-i18n-html="fin_lead"><strong>Financujeme vaše bydlení.</strong> Spolupracujeme s předními evropskými bankami a pro naše klienty zajišťujeme nejlepší podmínky financování přímo připravené pro projekt Gran Via Residences.</p>
+            <ul class="finance-list gsap-reveal" style="transition-delay: 0.1s">
+                <li data-i18n="fin_li1">Porovnání nabídek předních bank a výběr té nejvýhodnější</li>
+                <li data-i18n="fin_li2">Financování připravené speciálně pro projekt Gran Via Residences</li>
+                <li data-i18n="fin_li3">Kupujete nové bydlení a zároveň prodáváte stávající nemovitost? Máme řešení</li>
+                <li data-i18n="fin_li4">Kompletní poradenství bez skrytých poplatků a závazků</li>
+                <li data-i18n="fin_li5">Vyřešíme i složitější finanční situace a nestandardní případy</li>
+            </ul>
+            <div class="finance-banner gsap-reveal" style="transition-delay: 0.2s">
+                <div class="banner-text" data-i18n-html="fin_banner">Váš klíč k novému domovu —<br><strong>bez starostí</strong>.</div>
+                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&auto=format&fit=crop" class="banner-img" alt="Finanční poradci">
+            </div>
+        </div>
+        <div class="finance-right gsap-reveal" style="transition-delay: 0.3s">
+            <h3 data-i18n="calc_title">Spočítejte si měsíční splátku</h3>
+            <div class="calc-row">
+                <span class="calc-label" data-i18n="calc_price_label">Kupní cena nemovitosti</span>
+                <div class="calc-controls">
+                    <button class="calc-btn" id="btn-price-minus"><i class="fa-solid fa-minus"></i></button>
+                    <div class="calc-input-wrapper">
+                        <input type="text" id="calc-price" class="calc-input" value="3 000 000" readonly> <span class="calc-currency">Kč</span>
+                    </div>
+                    <button class="calc-btn" id="btn-price-plus"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="calc-row">
+                <span class="calc-label" data-i18n="calc_loan_label">Potřebuji půjčit</span>
+                <div class="calc-controls">
+                    <button class="calc-btn" id="btn-loan-minus"><i class="fa-solid fa-minus"></i></button>
+                    <div class="calc-input-wrapper">
+                        <input type="text" id="calc-loan" class="calc-input" value="2 400 000" readonly> <span class="calc-currency">Kč</span>
+                    </div>
+                    <button class="calc-btn" id="btn-loan-plus"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="calc-row">
+                <span class="calc-label" data-i18n="calc_years_label">Chci splácet</span>
+                <div class="calc-controls">
+                    <button class="calc-btn" id="btn-years-minus"><i class="fa-solid fa-minus"></i></button>
+                    <div class="calc-input-wrapper">
+                        <input type="text" id="calc-years" class="calc-input" value="30" readonly> <span data-i18n="calc_years_unit">let</span>
+                    </div>
+                    <button class="calc-btn" id="btn-years-plus"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+            <div class="calc-result-row">
+                <span class="calc-result-label" data-i18n="calc_result_label">Měsíční splátka</span>
+                <span class="calc-result-value" id="calc-result">12 004 Kč</span>
+            </div>
+            <div class="calc-rate-row">
+                <span data-i18n="calc_rate_label">Roční úroková sazba</span>
+                <span class="calc-rate-val">4,39 %</span>
+            </div>
+            <p class="calc-disclaimer" data-i18n="calc_disclaimer">Sazba je orientační a propočet má informativní cíl. Výsledná roční úroková sazba úvěru je závislá na konkrétním případu. Nejedná se o garantovanou sazbu.</p>
+            <a href="#kontakt"><button class="btn-calc" data-i18n="calc_btn">Zobrazit</button></a>
+        </div>
+    </section>
+
+    <section id="kontakt" class="contact-sec">
+        <div class="form-half">
+            <span class="subtitle gsap-reveal" data-i18n="cont_sub">Napište nám</span>
+            <h2 class="sec-title gsap-reveal" data-i18n="cont_title">Máte zájem o prohlídku?</h2>
+            <form class="gsap-reveal" style="transition-delay: 0.2s" id="contact-form">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="lbl_name">Jméno a příjmení</label>
+                    <input type="text" class="form-control" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="lbl_email">E-mail</label>
+                        <input type="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" data-i18n="lbl_phone">Telefon</label>
+                        <input type="tel" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="lbl_message">Vaše zpráva</label>
+                    <textarea class="form-control"></textarea>
+                </div>
+                <button type="submit" class="btn-submit" data-i18n="btn_submit">Odeslat nezávaznou poptávku</button>
+                <div class="form-success" id="form-success">
+                    <i class="fa-solid fa-circle-check" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>
+                    <span data-i18n="form_success">Děkujeme! Vaše zpráva byla odeslána. Ozveme se vám co nejdříve.</span>
+                </div>
+            </form>
+        </div>
+        <div class="info-half gsap-reveal" style="transition-delay: 0.3s">
+            <div class="agent-info">
+                <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&auto=format&fit=crop" alt="Prodejce" class="agent-photo">
+                <h3 class="agent-name">Ing. Martin Hofer</h3>
+                <span class="agent-title" data-i18n="agent_title">Exkluzivní prodejce projektu</span>
+                <a href="tel:+420800123456" class="agent-contact-link">
+                    <i class="fa-solid fa-phone"></i> +420 800 123 456
+                </a>
+                <a href="mailto:info@granvia-residences.eu" class="agent-contact-link">
+                    <i class="fa-solid fa-envelope"></i> info@granvia-residences.eu
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <a href="#" class="footer-logo">GRAN VIA RESIDENCES</a>
+        <p class="copyright" data-i18n="footer_copy">&copy; 2025 Gran Via Development s.r.o. Všechna práva vyhrazena.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- ===== APARTMENT DETAIL OVERLAY ===== -->
+    <div id="apt-detail-overlay">
+        <!-- Header: Zpět | kód bytu | × -->
+        <div class="apt-modal-header">
+            <button class="apt-back-btn" id="apt-detail-close">&#8592; Zpět</button>
+            <div class="apt-modal-code" id="apt-modal-code"></div>
+            <button class="apt-close-x" onclick="document.getElementById('apt-detail-overlay').classList.remove('active');document.body.style.overflow='';">&#x2715;</button>
+        </div>
+
+        <div class="apt-detail-grid">
+            <!-- Left: půdorys -->
+            <div class="apt-detail-left">
+                <img id="apt-detail-plan-img" src="" alt="Půdorys bytu">
+            </div>
+
+            <!-- Center: info karta -->
+            <div class="apt-detail-center">
+                <div class="apt-dc-price" id="apt-dc-price"></div>
+                <div class="apt-dc-monthly" id="apt-dc-monthly"></div>
+                <div class="apt-dc-rows" id="apt-dc-rows"></div>
+                <div class="apt-dc-actions">
+                    <div class="apt-btn-row">
+                        <button class="apt-btn-dark" id="apt-btn-finance"><i class="fa-solid fa-coins"></i> <span data-i18n="apt_finance_btn">Financování</span></button>
+                        <button class="apt-btn-dark apt-btn-contact" id="apt-btn-contact"><i class="fa-solid fa-pen"></i> <span data-i18n="apt_contact_btn">Mám zájem</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: galerie -->
+            <div class="apt-detail-right">
+                <div class="apt-gallery-main">
+                    <img id="apt-gallery-img" src="" alt="">
+                    <button class="apt-gallery-nav apt-gallery-prev" id="apt-gallery-prev">&#8249;</button>
+                    <button class="apt-gallery-nav apt-gallery-next" id="apt-gallery-next">&#8250;</button>
+                </div>
+                <div class="apt-gallery-thumbs" id="apt-gallery-thumbs"></div>
+                <div class="apt-gallery-note" data-i18n="apt_gallery_note">Ilustrační fotografie — skutečná situace se může lišit.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLang = 'cs';
+        gsap.registerPlugin(ScrollTrigger);
+
+        /* =============================================
+           PRELOADER: Black panels expand from edges
+           ============================================= */
+        gsap.set(".intro-text", { opacity: 0, y: 25 });
+
+        // Hero title chars
+        const heroTitle = document.getElementById("hero-title");
+        const titleText = heroTitle.innerText;
+        heroTitle.innerHTML = "";
+        [...titleText].forEach(char => {
+            const span = document.createElement("span");
+            if (char === ' ') {
+                span.innerHTML = '&nbsp;';
+                span.style.cssText = 'display:inline-block;width:0.55em;';
+            } else {
+                span.innerText = char;
+            }
+            heroTitle.appendChild(span);
+        });
+
+        const tl = gsap.timeline();
+
+        // Progress bar fills over the whole preloader duration (~6.5s)
+        gsap.to("#intro-progress-fill", { width: "100%", duration: 6.2, ease: "power1.inOut", delay: 0.3 });
+
+
+        tl
+            // Text 1
+            .to(".intro-text.t1", { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", delay: 0.3 })
+            .to(".intro-text.t1", { opacity: 0, y: -20, duration: 0.4, ease: "power2.in", delay: 0.7 })
+
+            // Text 2
+            .to(".intro-text.t2", { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" })
+            .to(".intro-text.t2", { opacity: 0, y: -20, duration: 0.4, ease: "power2.in", delay: 0.7 })
+
+            // Text 3
+            .to(".intro-text.t3", { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" })
+            .to(".intro-text.t3", { opacity: 0, y: -20, duration: 0.4, ease: "power2.in", delay: 0.7 })
+
+            // Panels retract — top flies up, bottom flies down
+            .to(".pre-panel-top",          { height: 0, duration: 1.4, ease: "expo.inOut" })
+            .to(".pre-panel-bottom",       { height: 0, duration: 1.4, ease: "expo.inOut" }, "<")
+            .to("#intro-progress-wrap",    { opacity: 0, duration: 0.3 }, "<")
+
+            // Reveal header + hero
+            .to("#main-header", { y: 0, duration: 0.8, ease: "power3.out" }, "-=0.7")
+            .to(".hero-title-svg", { opacity: 1, scale: 1, duration: 1, ease: "back.out(1.7)" }, "-=0.5")
+            .to(".hero-title span", { y: 0, stagger: 0.08, duration: 0.8, ease: "power4.out" }, "-=0.7")
+            .to("#hero-scroll-hint", { opacity: 1, duration: 0.6 }, "-=0.2")
+            .call(() => { document.getElementById("preloader").style.display = "none"; });
+
+        /* =============================================
+           SCRUB TEXT
+           ============================================= */
+        function splitTextWords(el) {
+            const text = el.innerText;
+            el.innerHTML = "";
+            text.split(" ").forEach(word => {
+                const span = document.createElement("span");
+                span.className = "word";
+                span.innerText = word + " ";
+                el.appendChild(span);
+            });
+        }
+        splitTextWords(document.getElementById("scrub-text"));
+
+        let scrubAnim = gsap.to(".highlight-text .word", {
+            color: "#111111",
+            stagger: 0.08,
+            scrollTrigger: {
+                trigger: ".scroll-text-sec",
+                start: "top 70%",
+                end: "bottom 80%",
+                scrub: 1.2
+            }
+        });
+
+        /* =============================================
+           SCROLL REVEAL
+           ============================================= */
+        document.querySelectorAll(".gsap-reveal").forEach(el => {
+            const delayStr = el.style.transitionDelay;
+            const delay = delayStr ? parseFloat(delayStr) : 0;
+            el.style.transitionDelay = "";
+            gsap.to(el, {
+                opacity: 1, y: 0, duration: 1, ease: "power3.out",
+                delay,
+                scrollTrigger: {
+                    trigger: el, start: "top bottom", toggleActions: "play none none none",
+                    invalidateOnRefresh: true
+                }
+            });
+        });
+
+        window.addEventListener("load", () => {
+            ScrollTrigger.refresh();
+        });
+
+        /* =============================================
+           HERO PARALLAX
+           ============================================= */
+
+        /* =============================================
+           SCROLL PROGRESS
+           ============================================= */
+        window.addEventListener("scroll", () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / docHeight) * 100;
+            document.getElementById("scroll-progress").style.width = progress + "%";
+        });
+
+        /* =============================================
+           HEADER SCROLL STATE
+           ============================================= */
+        window.addEventListener("scroll", () => {
+            document.getElementById("main-header").classList.toggle("scrolled", window.scrollY > 50);
+        });
+
+        /* =============================================
+           ACTIVE NAV LINK
+           ============================================= */
+        const navLinks = document.querySelectorAll("nav a[href^='#']");
+        const navIds = [...navLinks].map(l => l.getAttribute('href').slice(1));
+        const trackedSections = [...document.querySelectorAll('section[id]')].filter(s => navIds.includes(s.id));
+
+        window.addEventListener("scroll", () => {
+            let current = "";
+            trackedSections.forEach(sec => {
+                const rect = sec.getBoundingClientRect();
+                if (rect.top <= window.innerHeight * 0.5 && rect.bottom > window.innerHeight * 0.1) current = sec.id;
+            });
+            navLinks.forEach(link => {
+                link.classList.toggle("active", link.getAttribute("href") === "#" + current);
+            });
+        }, { passive: true });
+
+        /* =============================================
+           HAMBURGER MENU
+           ============================================= */
+        const hamburger = document.getElementById("hamburger");
+        const mobileNav = document.getElementById("mobile-nav");
+        hamburger.addEventListener("click", () => {
+            hamburger.classList.toggle("open");
+            mobileNav.classList.toggle("open");
+        });
+        function closeMobileNav() {
+            hamburger.classList.remove("open");
+            mobileNav.classList.remove("open");
+        }
+
+        /* =============================================
+           FILTER PILLS
+           ============================================= */
+        /* =============================================
+           PAGER + FILTER
+           ============================================= */
+        const PAGE_SIZE = 8;
+        let pagerVisible = PAGE_SIZE;
+        let activeFilter = "all";
+
+        function applyPager() {
+            const rows = Array.from(document.querySelectorAll("#table-body tr"));
+            const matching = rows.filter(r => activeFilter === "all" || r.dataset.status === activeFilter);
+            const limit = activeFilter === "all" ? pagerVisible : Infinity;
+            let shown = 0;
+            rows.forEach(r => r.classList.add("hidden-row"));
+            matching.forEach(r => {
+                if (shown < limit) { r.classList.remove("hidden-row"); shown++; }
+            });
+            const hasMore = activeFilter === "all" && matching.length > pagerVisible;
+            document.getElementById("load-more-wrap").style.display = hasMore ? "block" : "none";
+            document.getElementById("table-empty").style.display = matching.length === 0 ? "block" : "none";
+        }
+
+        document.getElementById("filter-pills").addEventListener("click", e => {
+            const pill = e.target.closest(".filter-pill");
+            if (!pill) return;
+            document.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+            pill.classList.add("active");
+            activeFilter = pill.dataset.filter;
+            pagerVisible = PAGE_SIZE;
+            applyPager();
+        });
+
+        document.getElementById("load-more-btn").addEventListener("click", () => {
+            pagerVisible += PAGE_SIZE;
+            applyPager();
+        });
+
+        applyPager();
+
+        /* =============================================
+           TABLE SORT
+           ============================================= */
+        document.querySelectorAll("th[data-col]").forEach(th => {
+            th.addEventListener("click", () => {
+                const col = parseInt(th.dataset.col);
+                const tbody = document.getElementById("table-body");
+                const rows = Array.from(tbody.querySelectorAll("tr"));
+                const isAsc = th.classList.contains("sorted-asc");
+                document.querySelectorAll("th").forEach(t => t.classList.remove("sorted-asc", "sorted-desc"));
+                th.classList.add(isAsc ? "sorted-desc" : "sorted-asc");
+                rows.sort((a, b) => {
+                    const aRaw = a.cells[col]?.innerText.trim() || "";
+                    const bRaw = b.cells[col]?.innerText.trim() || "";
+                    const aVal = aRaw.replace(/\s/g, "").replace(/[^\d,.-]/g, "").replace(",", ".");
+                    const bVal = bRaw.replace(/\s/g, "").replace(/[^\d,.-]/g, "").replace(",", ".");
+                    const aNum = parseFloat(aVal), bNum = parseFloat(bVal);
+                    if (!isNaN(aNum) && !isNaN(bNum)) return isAsc ? bNum - aNum : aNum - bNum;
+                    return isAsc ? bRaw.localeCompare(aRaw) : aRaw.localeCompare(bRaw);
+                });
+                rows.forEach(row => tbody.appendChild(row));
+                pagerVisible = PAGE_SIZE;
+                applyPager();
+            });
+        });
+
+        /* =============================================
+           MORTGAGE CALCULATOR
+           ============================================= */
+        function formatNum(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
+        }
+
+        const calcLimits = {
+            cs: { price: { val:3000000, step:100000, min:500000,  max:20000000 },
+                  loan:  { val:2400000, step:100000, min:100000,  max:15000000 },
+                  years: { val:30,      step:1,      min:5,       max:30       } },
+            en: { price: { val:120000,  step:5000,   min:20000,   max:800000   },
+                  loan:  { val:96000,   step:5000,   min:5000,    max:600000   },
+                  years: { val:30,      step:1,      min:5,       max:30       } },
+        };
+        calcLimits.de = calcLimits.en;
+
+        let calcCfg = calcLimits.cs;
+
+        function calcMortgage() {
+            const P = parseInt(document.getElementById("calc-loan").value.replace(/\s|\u00a0/g, ""));
+            const r = 4.39 / 100 / 12;
+            const n = parseInt(document.getElementById("calc-years").value.replace(/\s/g, "")) * 12;
+            const M = P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+            const result = formatNum(Math.round(M));
+            document.getElementById('calc-result').innerText = currentLang === 'cs'
+                ? result + '\u00a0Kč'
+                : '€\u00a0' + result;
+        }
+
+        function setupStepper(minusId, plusId, inputId, cfgKey) {
+            const input = document.getElementById(inputId);
+            function getVal() { return parseInt(input.value.replace(/[\s\u00a0]/g, "")); }
+            function setVal(v) {
+                const c = calcCfg[cfgKey];
+                v = Math.max(c.min, Math.min(c.max, v));
+                input.value = formatNum(v);
+                calcMortgage();
+            }
+            document.getElementById(minusId).addEventListener("click", () => setVal(getVal() - calcCfg[cfgKey].step));
+            document.getElementById(plusId).addEventListener("click", () => setVal(getVal() + calcCfg[cfgKey].step));
+        }
+
+        setupStepper("btn-price-minus", "btn-price-plus", "calc-price", "price");
+        setupStepper("btn-loan-minus",  "btn-loan-plus",  "calc-loan",  "loan");
+        setupStepper("btn-years-minus", "btn-years-plus", "calc-years", "years");
+        calcMortgage();
+
+        /* =============================================
+           KONFIGURÁTOR
+           ============================================= */
+        const kFloors = [
+            { name: "1.NP", count: 7, video: "1np.mp4", reverseVideo: "1np-reverse.mp4", plan: "plan-1np.jpg", points: [[50.07,83.39],[72.99,66.9],[73.19,58.52],[50,74.73]], apartments: [
+                { apt: "GV-101", points: [[33.61,85.73],[56.39,85.59],[56.11,63.61],[52.57,63.61],[52.57,59.35],[43.68,59.35],[43.61,50.28],[33.68,50.28]] },
+                { apt: "GV-102", points: [[57.01,85.73],[70.76,85.59],[70.42,43],[58.4,42.86],[58.47,56.05],[63.33,56.05],[63.4,63.06],[56.88,62.92]] },
+                { apt: "GV-103", points: [[70.35,41.9],[70.28,17.58],[52.43,17.17],[52.43,32.15],[61.88,32.28],[61.94,41.9],[70.35,42.04],[70.28,42.04]] },
+                { apt: "GV-104", points: [[43.75,49.18],[33.61,49.46],[33.75,16.62],[52.36,17.17],[52.29,32.15],[50.97,32.15],[50.97,39.29],[43.75,39.43]] }
+            ] },
+            { name: "2.NP", count: 7, video: "2np.mp4", reverseVideo: "2np-reverse.mp4", plan: "plan-2np.jpg", points: [[50,74.73],[73.19,58.52],[73.4,50.14],[50,64.84]], apartments: [
+                { apt: "GV-201", points: [[33.61,85.73],[56.39,85.59],[56.11,63.61],[52.57,63.61],[52.57,59.35],[43.68,59.35],[43.61,50.28],[33.68,50.28]] },
+                { apt: "GV-202", points: [[57.01,85.73],[70.76,85.59],[70.42,43],[58.4,42.86],[58.47,56.05],[63.33,56.05],[63.4,63.06],[56.88,62.92]] },
+                { apt: "GV-203", points: [[70.35,41.9],[70.28,17.58],[52.43,17.17],[52.43,32.15],[61.88,32.28],[61.94,41.9],[70.35,42.04],[70.28,42.04]] },
+                { apt: "GV-204", points: [[43.75,49.18],[33.61,49.46],[33.75,16.62],[52.36,17.17],[52.29,32.15],[50.97,32.15],[50.97,39.29],[43.75,39.43]] }
+            ] },
+            { name: "3.NP", count: 7, video: "3np.mp4", reverseVideo: "3np-reverse.mp4", plan: "plan-3np.jpg", points: [[50,64.84],[73.4,50.14],[73.61,41.63],[50,54.54]], apartments: [
+                { apt: "GV-301", points: [[33.61,85.73],[56.39,85.59],[56.11,63.61],[52.57,63.61],[52.57,59.35],[43.68,59.35],[43.61,50.28],[33.68,50.28]] },
+                { apt: "GV-302", points: [[57.01,85.73],[70.76,85.59],[70.42,43],[58.4,42.86],[58.47,56.05],[63.33,56.05],[63.4,63.06],[56.88,62.92]] },
+                { apt: "GV-303", points: [[70.35,41.9],[70.28,17.58],[52.43,17.17],[52.43,32.15],[61.88,32.28],[61.94,41.9],[70.35,42.04],[70.28,42.04]] },
+                { apt: "GV-304", points: [[43.75,49.18],[33.61,49.46],[33.75,16.62],[52.36,17.17],[52.29,32.15],[50.97,32.15],[50.97,39.29],[43.75,39.43]] }
+            ] },
+            { name: "4.NP", count: 7, video: "4np.mp4", reverseVideo: "4np-reverse.mp4", plan: "plan-4np.jpg", points: [[50,54.54],[73.68,41.63],[73.96,33.11],[50,44.24]], apartments: [
+                { apt: "GV-401", points: [[33.61,85.73],[56.39,85.59],[56.11,63.61],[52.57,63.61],[52.57,59.35],[43.68,59.35],[43.61,50.28],[33.68,50.28]] },
+                { apt: "GV-402", points: [[57.01,85.73],[70.76,85.59],[70.42,43],[58.4,42.86],[58.47,56.05],[63.33,56.05],[63.4,63.06],[56.88,62.92]] },
+                { apt: "GV-403", points: [[70.35,41.9],[70.28,17.58],[52.43,17.17],[52.43,32.15],[61.88,32.28],[61.94,41.9],[70.35,42.04],[70.28,42.04]] },
+                { apt: "GV-404", points: [[43.75,49.18],[33.61,49.46],[33.75,16.62],[52.36,17.17],[52.29,32.15],[50.97,32.15],[50.97,39.29],[43.75,39.43]] }
+            ] },
+            { name: "5.NP", count: 7, video: "5np.mp4", reverseVideo: "5np-reverse.mp4", plan: "plan-5np.jpg", points: [[50,44.24],[73.96,33.11],[74.24,21.84],[49.93,30.5]], apartments: [
+                { apt: "GV-501", points: [[33.61,85.73],[56.39,85.59],[56.11,63.61],[52.57,63.61],[52.57,59.35],[43.68,59.35],[43.61,50.28],[33.68,50.28]] },
+                { apt: "GV-502", points: [[57.01,85.73],[70.76,85.59],[70.42,43],[58.4,42.86],[58.47,56.05],[63.33,56.05],[63.4,63.06],[56.88,62.92]] },
+                { apt: "GV-503", points: [[70.35,41.9],[70.28,17.58],[52.43,17.17],[52.43,32.15],[61.88,32.28],[61.94,41.9],[70.35,42.04],[70.28,42.04]] },
+                { apt: "GV-504", points: [[43.75,49.18],[33.61,49.46],[33.75,16.62],[52.36,17.17],[52.29,32.15],[50.97,32.15],[50.97,39.29],[43.75,39.43]] }
+            ] },
+            { name: "6.NP", count: 4, video: "6np.mp4", reverseVideo: "6np-reverse.mp4", plan: "plan-6np.jpg", points: [[49.93,30.5],[32.71,23.22],[32.78,19.78],[35.69,18.68],[35.56,9.89],[53.61,14.56],[72.15,10.03],[71.88,19.1],[74.31,18.41],[74.24,21.71]], apartments: [
+                { apt: "GV-601", points: [[37.01,49.87],[46.18,49.59],[46.18,47.26],[51.11,47.26],[51.25,78.31],[37.01,78.31],[37.01,49.87],[37.01,49.87]] },
+                { apt: "GV-602", points: [[51.81,67.59],[51.88,78.31],[65.14,78.31],[64.93,40.39],[59.72,40.39],[59.79,49.73],[57.43,49.73],[57.64,67.45]] },
+                { apt: "GV-603", points: [[64.79,39.7],[64.79,22.53],[37.01,22.94],[37.08,48.77],[44.24,48.5],[44.24,38.74],[57.08,38.33],[57.08,39.7]] }
+            ] }
+        ];
+
+        const kSvg = document.getElementById('konfigurator-svg');
+        const kTooltip = document.getElementById('floor-tooltip');
+        const kVideoOverlay = document.getElementById('k-video-overlay');
+        const kPlanOverlay = document.getElementById('k-plan-overlay');
+        const kVideo = document.getElementById('k-video');
+        const kPlanImg = document.getElementById('k-plan-img');
+        const kPlanLabel = document.getElementById('k-plan-label');
+        const kPlanSvg = document.getElementById('k-plan-svg');
+        const kAptTooltip = document.getElementById('k-apt-tooltip');
+        let kCurrentFloor = null;
+
+        /* Build lookup map from price table: { "GV-101": { status, price, layout, uzitna, lodzie, celkova, parking } } */
+        const tableData = {};
+        document.querySelectorAll('#table-body tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td');
+            if (cells.length < 8) return;
+            const code = cells[0].textContent.trim();
+            const badge = tr.querySelector('.status-badge');
+            const priceCell = cells[7];
+            tableData[code] = {
+                status:   tr.dataset.status || 'green',
+                statusLabel: badge ? badge.textContent.trim() : '',
+                floor:    cells[1].textContent.trim(),
+                layout:   cells[2].textContent.trim(),
+                uzitna:   cells[3].textContent.trim(),
+                lodzie:   cells[4].textContent.trim(),
+                celkova:  cells[5].textContent.trim(),
+                parking:  cells[6].textContent.trim(),
+                price:    cells[7].textContent.trim(),
+                priceCzk: priceCell.dataset.czk || '',
+                priceEur: priceCell.dataset.eur || '',
+            };
+        });
+
+        const STATUS_LABEL = {
+            green:  'Dostupné',
+            yellow: 'Zamluveno',
+            orange: 'Rezervováno',
+            red:    'Prodáno'
+        };
+        const STATUS_HOVER_FILL = {
+            green:  'rgba(22,163,74,0.7)',
+            yellow: 'rgba(202,138,4,0.7)',
+            orange: 'rgba(217,119,6,0.7)',
+            red:    'rgba(220,38,38,0.7)'
+        };
+
+        function renderApartments(floor) {
+            kPlanSvg.innerHTML = '';
+            if (!floor.apartments || floor.apartments.length === 0) return;
+            floor.apartments.forEach((apt, i) => {
+                const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                poly.setAttribute('points', apt.points.map(p => p.join(',')).join(' '));
+                const aptStatus = (tableData[apt.apt] || {}).status || apt.status || 'green';
+                poly.classList.add('apt-poly', 'status-' + aptStatus);
+                poly.style.animationDelay = (i * 0.6) + 's';
+
+                poly.addEventListener('mouseenter', () => {
+                    poly.style.animationPlayState = 'paused';
+                    const td = tableData[apt.apt] || {};
+                    const status = td.status || apt.status || 'green';
+                    poly.style.fill = STATUS_HOVER_FILL[status] || STATUS_HOVER_FILL.green;
+                    kAptTooltip.innerHTML = `
+                        <div class="k-apt-tooltip__code">${apt.apt}</div>
+                        <div class="k-apt-tooltip__row">${STATUS_LABEL[status] || ''} · ${td.price || ''}</div>
+                        ${td.layout ? `<div class="k-apt-tooltip__row">${td.layout} · ${td.celkova || ''}</div>` : ''}
+                        <div class="k-apt-tooltip__hint">${T[currentLang].apt_click}</div>
+                    `;
+                    kAptTooltip.classList.add('visible');
+                });
+                poly.addEventListener('mousemove', e => {
+                    const rect = document.getElementById('k-plan-wrap').getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width * 100;
+                    const y = (e.clientY - rect.top)  / rect.height * 100;
+                    kAptTooltip.style.left = (x + 1.5) + '%';
+                    kAptTooltip.style.top  = (y - 6)   + '%';
+                });
+                poly.addEventListener('mouseleave', () => {
+                    poly.style.animationPlayState = '';
+                    poly.style.fill = '';
+                    kAptTooltip.classList.remove('visible');
+                });
+                poly.addEventListener('click', () => openAptDetail(apt));
+
+                kPlanSvg.appendChild(poly);
+            });
+        }
+
+        // Build SVG polygons
+        kFloors.forEach((floor, i) => {
+            const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            poly.setAttribute('points', floor.points.map(p => p.join(',')).join(' '));
+            poly.dataset.index = i;
+
+            poly.addEventListener('mouseenter', e => {
+                const currentFill = getComputedStyle(poly).fill;
+                poly.style.animation = 'none';
+                poly.style.transition = 'none';
+                poly.style.fill = currentFill;
+                poly.getBoundingClientRect(); // force reflow
+                poly.style.transition = 'fill 0.35s ease';
+                requestAnimationFrame(() => {
+                    poly.style.fill = 'rgba(255,255,255,0.67)';
+                });
+                kTooltip.innerHTML = `<div class="floor-tooltip__name">${floor.name}</div><div class="floor-tooltip__count">${floor.count} ${T[currentLang].floor_apts}</div><div class="floor-tooltip__hint">${T[currentLang].floor_click}</div>`;
+                kTooltip.classList.add('visible');
+            });
+            poly.addEventListener('mousemove', e => {
+                const wrap = document.querySelector('.konfigurator-wrap');
+                const rect = wrap.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
+                const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
+                kTooltip.style.left = x + '%';
+                kTooltip.style.top = y + '%';
+            });
+            poly.addEventListener('mouseleave', () => {
+                poly.style.transition = 'fill 0.35s ease';
+                poly.style.fill = 'rgba(255,255,255,0.18)';
+                setTimeout(() => {
+                    poly.style.animation = '';
+                    poly.style.fill = '';
+                    poly.style.transition = '';
+                }, 380);
+                kTooltip.classList.remove('visible');
+            });
+
+            poly.addEventListener('click', () => openFloor(floor));
+            kSvg.appendChild(poly);
+        });
+
+        function openFloor(floor) {
+            kCurrentFloor = floor;
+
+            kPlanImg.src = floor.plan;
+            let videoEnded = false;
+            let imgReady = kPlanImg.complete && kPlanImg.naturalWidth > 0;
+
+            function tryShowPlan() {
+                if (!videoEnded || !imgReady) return;
+                kVideoOverlay.classList.remove('active');
+                kPlanLabel.textContent = floor.name + ' — Půdorys';
+                kPlanOverlay.classList.add('active');
+                kVideo.src = '';
+                renderApartments(floor);
+            }
+
+            kPlanImg.onload = () => { imgReady = true; tryShowPlan(); };
+            kVideo.onended = () => { videoEnded = true; tryShowPlan(); };
+
+            kVideo.src = floor.video;
+            kVideo.oncanplay = () => {
+                kVideo.oncanplay = null;
+                kVideoOverlay.classList.add('active');
+            };
+            kVideo.play();
+        }
+
+
+        document.getElementById('k-back-btn').addEventListener('click', () => {
+            if (!kCurrentFloor) return;
+
+            kVideo.src = kCurrentFloor.reverseVideo;
+            kVideo.oncanplay = () => {
+                kVideo.oncanplay = null;
+                kPlanOverlay.classList.remove('active');
+                kVideoOverlay.classList.add('active');
+            };
+            kVideo.onended = () => {
+                kVideoOverlay.classList.remove('active');
+                kVideo.src = '';
+                kCurrentFloor = null;
+            };
+            kVideo.play();
+        });
+
+        /* =============================================
+           APARTMENT DETAIL
+           ============================================= */
+        const aptDetailOverlay = document.getElementById('apt-detail-overlay');
+        let galleryPhotos = [], galleryIndex = 0;
+
+        /* Map apartment code → apt object from kFloors */
+        const aptByCode = {};
+        kFloors.forEach(floor => {
+            (floor.apartments || []).forEach(apt => {
+                aptByCode[apt.apt] = { ...apt, _floorPlan: floor.plan };
+            });
+        });
+
+        function openAptByCode(code) {
+            openAptDetail(aptByCode[code] || { apt: code });
+        }
+
+        /* "Zobrazit" buttons in price table */
+        document.getElementById('table-body').addEventListener('click', e => {
+            const btn = e.target.closest('.btn-zobrazit');
+            if (!btn) return;
+            e.preventDefault();
+            const code = btn.closest('tr').querySelector('td strong').textContent.trim();
+            openAptByCode(code);
+        });
+
+        function openAptDetail(apt) {
+            const td = tableData[apt.apt] || {};
+            const status = td.status || apt.status || 'green';
+            const statusLabel = STATUS_LABEL[status] || '';
+            const price = currentLang === 'cs'
+                ? (td.priceCzk ? td.priceCzk + '\u00a0Kč' : td.price)
+                : (td.priceEur ? '€\u00a0' + td.priceEur : td.price);
+            const t = T[currentLang];
+
+            document.getElementById('apt-modal-code').textContent = apt.apt || '';
+            document.getElementById('apt-dc-price').textContent = price;
+            document.getElementById('apt-dc-monthly').textContent = '';
+
+            // rows from table
+            const rowsEl = document.getElementById('apt-dc-rows');
+            const tableRows = [
+                { label: t.th2,  value: td.layout  },
+                { label: t.th3,  value: td.uzitna  },
+                { label: t.th4,  value: td.lodzie  },
+                { label: t.th5,  value: td.celkova },
+                { label: t.th6,  value: td.parking },
+                { label: t.th1,  value: td.floor   },
+            ].filter(r => r.value && r.value !== '-');
+
+            let rowsHTML = `<div class="apt-dc-row">
+                <span class="apt-dc-row-label">${t.apt_status_label}</span>
+                <span class="apt-status-pill ${status}">${statusLabel}</span>
+            </div>`;
+            tableRows.forEach(d => {
+                rowsHTML += `<div class="apt-dc-row">
+                    <span class="apt-dc-row-label">${d.label}</span>
+                    <span class="apt-dc-row-val">${d.value}</span>
+                </div>`;
+            });
+            rowsEl.innerHTML = rowsHTML;
+
+            // půdorys — soubor pojmenovaný podle kódu bytu, např. pudorys-GV101.jpg
+            const planImg = document.getElementById('apt-detail-plan-img');
+            const planSrc = apt.planImg || 'pudorys-GV101.jpg';
+            planImg.src = planSrc;
+            planImg.style.display = planSrc ? 'block' : 'none';
+
+            // gallery — 8 sdílených vizualizací: viz-01.jpg … viz-08.jpg
+            const DEFAULT_PHOTOS = ['viz-01.jpg','viz-02.jpg','viz-03.jpg',
+                                    'viz-04.jpg','viz-05.jpg','viz-06.jpg'];
+            galleryPhotos = (apt.photos && apt.photos.length) ? apt.photos : DEFAULT_PHOTOS;
+            galleryIndex = 0;
+            renderGallery();
+
+            // financování button
+            document.getElementById('apt-btn-finance').onclick = () => {
+                aptDetailOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+                document.querySelector('#financovani').scrollIntoView({ behavior: 'smooth' });
+            };
+
+            // contact button
+            document.getElementById('apt-btn-contact').onclick = () => {
+                aptDetailOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+                document.querySelector('#kontakt').scrollIntoView({ behavior: 'smooth' });
+            };
+
+            aptDetailOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function renderGallery() {
+            const mainImg = document.getElementById('apt-gallery-img');
+            const thumbsEl = document.getElementById('apt-gallery-thumbs');
+            if (galleryPhotos.length === 0) {
+                mainImg.src = ''; mainImg.style.display = 'none';
+                thumbsEl.innerHTML = '';
+                return;
+            }
+            mainImg.style.display = 'block';
+            mainImg.src = galleryPhotos[galleryIndex];
+            thumbsEl.innerHTML = galleryPhotos.map((src, i) =>
+                `<img src="${src}" class="apt-gallery-thumb${i === galleryIndex ? ' active' : ''}" data-idx="${i}" alt="">`
+            ).join('');
+            thumbsEl.querySelectorAll('.apt-gallery-thumb').forEach(t => {
+                t.addEventListener('click', () => { galleryIndex = parseInt(t.dataset.idx); renderGallery(); });
+            });
+        }
+
+        document.getElementById('apt-gallery-prev').addEventListener('click', () => {
+            if (!galleryPhotos.length) return;
+            galleryIndex = (galleryIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
+            renderGallery();
+        });
+        document.getElementById('apt-gallery-next').addEventListener('click', () => {
+            if (!galleryPhotos.length) return;
+            galleryIndex = (galleryIndex + 1) % galleryPhotos.length;
+            renderGallery();
+        });
+        document.getElementById('apt-detail-close').addEventListener('click', () => {
+            aptDetailOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        /* =============================================
+           PŘEKLADY / TRANSLATIONS
+           ============================================= */
+        const T = {
+            cs: {
+                pre1:'Prémiová lokalita', pre2:'Prémiové materiály', pre3:'Prémiové bydlení',
+                nav_apts:'Výběr bytů', nav_loc:'Lokalita', nav_fin:'Financování', nav_contact:'Kontakt',
+                hero_scroll:'Přejít níže',
+                scrub:'Gran Via Residences je místo, kde se architektura setkává s přírodou, každé ráno začíná výhledem na panorama a život plyne v rytmu elegance, klidu a nadčasového designu. Právě tady vzniká nová adresa prestiže — domov, který překonává veškerá očekávání.',
+                rez_title:'Nová definice<br><span style="color:var(--text-light);">prémiového bydlení</span>',
+                rez_lead:'Představujeme Gran Via Residences. <strong>Domov pro ty, kteří si volí to nejlepší.</strong>',
+                rez_p1:'Gran Via Residences přináší nový standard bydlení v jedné z nejatraktivnějších lokalit regionu. Projekt kombinuje nadčasovou architekturu s prémiovou polohou — uprostřed přírody, přesto s veškerou infrastrukturou na dosah. Každý detail byl navržen s cílem poskytnout maximální komfort a soukromí.',
+                rez_p2:'Prostorné apartmány jsou vybaveny klimatizací, řízeným větráním s rekuperací, ultrarychlým optickým internetem a každý zahrnuje privátní parkovací stání. Vše, co potřebujete pro moderní a pohodlný život.',
+                rez_p3:'Nabízíme dispozice od kompaktních apartmánů až po velkorysé rodinné byty. <strong>Vyberte si ten svůj.</strong>',
+                feat_loc:'Prémiová lokalita', feat_reco:'Bezbariérový přístup', feat_park:'Soukromé parkování',
+                feat_space:'Prostorné apartmány', feat_clim:'Klimatizace a rekuperace', feat_net:'Optický internet',
+                conf_sub:'Interaktivní průvodce', conf_title:'Výběr apartmánů', conf_hint:'Klikněte na patro budovy pro zobrazení dispozic',
+                back_btn:'Zpět',
+                price_title:'Apartmány', f_all:'Vše', f_avail:'Dostupné', f_res_s:'Zamluveno', f_res:'Rezervováno', f_sold:'Prodáno',
+                th0:'Kód', th1:'Podlaží', th2:'Dispozice', th3:'Užitná plocha', th4:'Lodžie', th5:'Celková plocha', th6:'Park. stání', th7:'Cena', th8:'Stav',
+                show_btn:'Zobrazit', table_empty:'Žádné apartmány neodpovídají vybranému filtru.',
+                ben_sub:'Standardy a vybavení', ben_title:'Bydlení bez kompromisů',
+                ben_text:'Ať už hledáte soukromý azyl mimo ruch velkoměsta, nebo ideální zázemí pro vaši rodinu, Gran Via Residences vám nabídne nadstandardní komfort, nejmodernější technologie a maximální soukromí v prestižní lokalitě.',
+                ben_btn:'Výběr apartmánů',
+                card1_title:'Chytrá domácnost', card1_text:'Apartmány jsou plně připraveny na integraci systémů pro chytrou domácnost. Teplotu, stínění i zabezpečení ovládáte pohodlně z telefonu nebo tabletu, kdekoliv na světě.',
+                card2_title:'Prémiové materiály', card2_text:'Masivní dubové podlahy, velkoformátová kamenná dlažba, designová italská sanita. Každý prvek byl pečlivě vybrán pro svou nejvyšší kvalitu, trvanlivost a nadčasový estetický výraz.',
+                card3_title:'Soukromí a výhled', card3_text:'Architektura projektu maximalizuje výhled každého apartmánu a zajišťuje absolutní soukromí díky promyšlenému rozmístění teras a zeleně. Váš prostor je skutečně váš.',
+                loc_sub:'Objevte okolí', loc_title:'Gran Via: Adresa prestiže',
+                poi1_title:'Golf & Country Club', poi1_text:'Prestižní 18-jamkové hřiště s panoramatickým výhledem v docházkové vzdálenosti.',
+                poi2_title:'Lyžařské středisko', poi2_text:'Moderní ski resort s upravenou sítí sjezdovek pouhých 8 minut jízdy.',
+                poi3_title:'Fine dining & bistro', poi3_text:'Restaurace oceněné mezinárodními gurmánskými průvodci v centru čtvrti.',
+                poi4_title:'Wellness & Spa', poi4_text:'Exkluzivní wellness centrum s bazénem, saunami a relaxační zónou přímo v projektu.',
+                fin_title:'Financování',
+                fin_lead:'<strong>Financujeme vaše bydlení.</strong> Spolupracujeme s předními evropskými bankami a pro naše klienty zajišťujeme nejlepší podmínky financování přímo připravené pro projekt Gran Via Residences.',
+                fin_li1:'Porovnání nabídek předních bank a výběr té nejvýhodnější',
+                fin_li2:'Financování připravené speciálně pro projekt Gran Via Residences',
+                fin_li3:'Kupujete nové bydlení a zároveň prodáváte stávající nemovitost? Máme řešení',
+                fin_li4:'Kompletní poradenství bez skrytých poplatků a závazků',
+                fin_li5:'Vyřešíme i složitější finanční situace a nestandardní případy',
+                fin_banner:'Váš klíč k novému domovu —<br><strong>bez starostí</strong>.',
+                calc_title:'Spočítejte si měsíční splátku', calc_price_label:'Kupní cena nemovitosti',
+                calc_loan_label:'Potřebuji půjčit', calc_years_label:'Chci splácet', calc_years_unit:'let',
+                calc_result_label:'Měsíční splátka', calc_rate_label:'Roční úroková sazba',
+                calc_disclaimer:'Sazba je orientační a propočet má informativní cíl. Výsledná roční úroková sazba úvěru je závislá na konkrétním případu. Nejedná se o garantovanou sazbu.',
+                calc_btn:'Nezávazně zjistit',
+                cont_sub:'Napište nám', cont_title:'Máte zájem o prohlídku?',
+                lbl_name:'Jméno a příjmení', lbl_email:'E-mail', lbl_phone:'Telefon', lbl_message:'Vaše zpráva',
+                btn_submit:'Odeslat nezávaznou poptávku',
+                form_success:'Děkujeme! Vaše zpráva byla odeslána. Ozveme se vám co nejdříve.',
+                agent_title:'Exkluzivní prodejce projektu',
+                footer_copy:'© 2026 Gran Via Development s.r.o. Všechna práva vyhrazena.',
+                apt_tech:'Technické informace', apt_finance_btn:'Financování', apt_contact_btn:'Mám zájem',
+                apt_gallery_note:'Ilustrační fotografie — skutečná situace se může lišit.',
+                status_green:'Dostupné', status_yellow:'Zamluveno', status_orange:'Rezervováno', status_red:'Prodáno',
+                apt_status_label:'Stav', floor_apts:'Apartmánů', floor_click:'Klikněte pro navigaci', apt_click:'Klikněte pro detaily apartmánu',
+            },
+            en: {
+                pre1:'Premium location', pre2:'Premium materials', pre3:'Premium living',
+                nav_apts:'Apartments', nav_loc:'Location', nav_fin:'Financing', nav_contact:'Contact',
+                hero_scroll:'Scroll down',
+                scrub:'Gran Via Residences is a place where architecture meets nature, every morning begins with a panoramic view, and life flows to the rhythm of elegance, tranquility and timeless design. This is where a new address of prestige is being created — a home that exceeds all expectations.',
+                rez_title:'A new definition of<br><span style="color:var(--text-light);">premium living</span>',
+                rez_lead:'Introducing Gran Via Residences. <strong>A home for those who choose the very best.</strong>',
+                rez_p1:'Gran Via Residences sets a new standard of living in one of the most attractive locations in the region. The project combines timeless architecture with a premium setting — surrounded by nature, yet with all infrastructure within reach. Every detail was designed to provide maximum comfort and privacy.',
+                rez_p2:'The spacious apartments are equipped with air conditioning, controlled ventilation with heat recovery, ultra-fast fiber optic internet, and each includes a private parking space. Everything you need for a modern and comfortable life.',
+                rez_p3:'We offer layouts from compact apartments to generous family residences. <strong>Choose yours.</strong>',
+                feat_loc:'Premium location', feat_reco:'Barrier-free access', feat_park:'Private parking',
+                feat_space:'Spacious apartments', feat_clim:'Air conditioning & ventilation', feat_net:'Fiber optic internet',
+                conf_sub:'Interactive guide', conf_title:'Select apartments', conf_hint:'Click on a floor to view layouts',
+                back_btn:'Back',
+                price_title:'Apartments', f_all:'All', f_avail:'Available', f_res_s:'Soft reserved', f_res:'Reserved', f_sold:'Sold',
+                th0:'Code', th1:'Floor', th2:'Layout', th3:'Usable area', th4:'Loggia', th5:'Total area', th6:'Parking', th7:'Price', th8:'Status',
+                show_btn:'View', table_empty:'No apartments match the selected filter.',
+                ben_sub:'Standards & equipment', ben_title:'Living without compromise',
+                ben_text:'Whether you seek a private retreat away from the city or the ideal family base, Gran Via Residences offers above-standard comfort, cutting-edge technology and maximum privacy in a prestigious location.',
+                ben_btn:'Select apartments',
+                card1_title:'Smart home', card1_text:'Apartments are fully prepared for smart home integration. Control temperature, shading and security from your phone or tablet, wherever in the world you are.',
+                card2_title:'Premium materials', card2_text:'Solid oak flooring, large-format stone tiling, designer Italian sanitary ware. Every element was carefully selected for its top quality, durability and timeless aesthetic expression.',
+                card3_title:'Privacy & views', card3_text:'The project\'s architecture maximises the view from every apartment and ensures absolute privacy through the thoughtful arrangement of terraces and greenery. Your space is truly yours.',
+                loc_sub:'Discover the area', loc_title:'Gran Via: Address of prestige',
+                poi1_title:'Golf & Country Club', poi1_text:'Prestigious 18-hole course with panoramic views within walking distance.',
+                poi2_title:'Ski resort', poi2_text:'Modern ski resort with groomed slopes just 8 minutes away.',
+                poi3_title:'Fine dining & bistro', poi3_text:'Restaurants awarded by international gourmet guides in the heart of the quarter.',
+                poi4_title:'Wellness & Spa', poi4_text:'Exclusive wellness centre with pool, saunas and relaxation zone within the project.',
+                fin_title:'Financing',
+                fin_lead:'<strong>We finance your home.</strong> We work with leading European banks and secure the best financing terms prepared specifically for the Gran Via Residences project.',
+                fin_li1:'Comparison of leading bank offers and selection of the most advantageous',
+                fin_li2:'Financing prepared specifically for the Gran Via Residences project',
+                fin_li3:'Buying a new home while selling your current property? We have a solution',
+                fin_li4:'Complete advisory service with no hidden fees or obligations',
+                fin_li5:'We resolve even complex financial situations and non-standard cases',
+                fin_banner:'Your key to a new home —<br><strong>worry free</strong>.',
+                calc_title:'Calculate your monthly payment', calc_price_label:'Purchase price',
+                calc_loan_label:'I need to borrow', calc_years_label:'I want to repay over', calc_years_unit:'years',
+                calc_result_label:'Monthly payment', calc_rate_label:'Annual interest rate',
+                calc_disclaimer:'The rate is indicative and the calculation is for informational purposes only. The actual annual interest rate depends on the specific case. This is not a guaranteed rate.',
+                calc_btn:'Find out more',
+                cont_sub:'Write to us', cont_title:'Interested in a viewing?',
+                lbl_name:'Full name', lbl_email:'E-mail', lbl_phone:'Phone', lbl_message:'Your message',
+                btn_submit:'Send a non-binding enquiry',
+                form_success:'Thank you! Your message has been sent. We will get back to you as soon as possible.',
+                agent_title:'Exclusive project sales agent',
+                footer_copy:'© 2026 Gran Via Development s.r.o. All rights reserved.',
+                apt_tech:'Technical information', apt_finance_btn:'Financing', apt_contact_btn:'I am interested',
+                apt_gallery_note:'Illustrative photos — actual situation may differ.',
+                status_green:'Available', status_yellow:'Soft reserved', status_orange:'Reserved', status_red:'Sold',
+                apt_status_label:'Status', floor_apts:'Apartments', floor_click:'Click to navigate', apt_click:'Click for apartment details',
+            },
+            de: {
+                pre1:'Premium-Lage', pre2:'Premium-Materialien', pre3:'Premium-Wohnen',
+                nav_apts:'Wohnungen', nav_loc:'Lage', nav_fin:'Finanzierung', nav_contact:'Kontakt',
+                hero_scroll:'Nach unten scrollen',
+                scrub:'Gran Via Residences ist ein Ort, wo Architektur auf Natur trifft, jeder Morgen mit einem Panoramablick beginnt und das Leben im Rhythmus von Eleganz, Ruhe und zeitlosem Design fließt. Hier entsteht eine neue Adresse des Prestiges — ein Zuhause, das alle Erwartungen übertrifft.',
+                rez_title:'Eine neue Definition von<br><span style="color:var(--text-light);">Premium-Wohnen</span>',
+                rez_lead:'Wir präsentieren Gran Via Residences. <strong>Ein Zuhause für die, die das Beste wählen.</strong>',
+                rez_p1:'Gran Via Residences setzt einen neuen Standard des Wohnens in einer der attraktivsten Lagen der Region. Das Projekt verbindet zeitlose Architektur mit einer Premiumlage — inmitten der Natur, jedoch mit aller Infrastruktur in Reichweite. Jedes Detail wurde für maximalen Komfort und Privatsphäre konzipiert.',
+                rez_p2:'Die geräumigen Apartments sind mit Klimaanlage, kontrollierter Lüftung mit Wärmerückgewinnung, ultraschnellem Glasfaserinternet ausgestattet und verfügen jeweils über einen privaten Stellplatz. Alles, was Sie für ein modernes und komfortables Leben benötigen.',
+                rez_p3:'Wir bieten Grundrisse von kompakten Apartments bis hin zu großzügigen Familienwohnungen. <strong>Wählen Sie Ihres.</strong>',
+                feat_loc:'Premium-Lage', feat_reco:'Barrierefreier Zugang', feat_park:'Privater Stellplatz',
+                feat_space:'Geräumige Apartments', feat_clim:'Klimaanlage & Lüftung', feat_net:'Glasfaserinternet',
+                conf_sub:'Interaktiver Leitfaden', conf_title:'Apartments wählen', conf_hint:'Klicken Sie auf ein Stockwerk, um die Grundrisse anzuzeigen',
+                back_btn:'Zurück',
+                price_title:'Apartments', f_all:'Alle', f_avail:'Verfügbar', f_res_s:'Vorgemerkt', f_res:'Reserviert', f_sold:'Verkauft',
+                th0:'Code', th1:'Stockwerk', th2:'Grundriss', th3:'Nutzfläche', th4:'Loggia', th5:'Gesamtfläche', th6:'Parkplatz', th7:'Preis', th8:'Status',
+                show_btn:'Anzeigen', table_empty:'Keine Apartments entsprechen dem gewählten Filter.',
+                ben_sub:'Standards & Ausstattung', ben_title:'Wohnen ohne Kompromisse',
+                ben_text:'Ob Sie ein privates Refugium abseits der Stadt oder die ideale Familienbasis suchen — Gran Via Residences bietet überdurchschnittlichen Komfort, modernste Technik und maximale Privatsphäre in einer Prestigelage.',
+                ben_btn:'Apartments wählen',
+                card1_title:'Smart Home', card1_text:'Die Apartments sind vollständig auf Smart-Home-Integration vorbereitet. Steuern Sie Temperatur, Beschattung und Sicherheit bequem von Ihrem Smartphone oder Tablet aus, egal wo auf der Welt.',
+                card2_title:'Premium-Materialien', card2_text:'Massives Eichenparkett, großformatige Steinplatten, Designer-Sanitäranlagen aus Italien. Jedes Element wurde sorgfältig nach höchster Qualität, Langlebigkeit und zeitlosem ästhetischen Ausdruck ausgewählt.',
+                card3_title:'Privatsphäre & Ausblick', card3_text:'Die Architektur des Projekts maximiert den Ausblick jeder Wohnung und gewährleistet absolute Privatsphäre durch die durchdachte Anordnung von Terrassen und Begrünung. Ihr Raum gehört wirklich Ihnen.',
+                loc_sub:'Entdecken Sie die Umgebung', loc_title:'Gran Via: Adresse des Prestiges',
+                poi1_title:'Golf & Country Club', poi1_text:'Prestigeträchtiger 18-Loch-Platz mit Panoramablick in Gehweite.',
+                poi2_title:'Skigebiet', poi2_text:'Modernes Skigebiet mit gepflegten Pisten nur 8 Minuten entfernt.',
+                poi3_title:'Fine Dining & Bistro', poi3_text:'Von internationalen Gourmetführern ausgezeichnete Restaurants im Herzen des Viertels.',
+                poi4_title:'Wellness & Spa', poi4_text:'Exklusives Wellnesszentrum mit Pool, Saunen und Relaxzone direkt im Projekt.',
+                fin_title:'Finanzierung',
+                fin_lead:'<strong>Wir finanzieren Ihr Zuhause.</strong> Wir arbeiten mit führenden europäischen Banken zusammen und sichern die besten Finanzierungskonditionen, die speziell für das Projekt Gran Via Residences vorbereitet wurden.',
+                fin_li1:'Vergleich führender Bankangebote und Auswahl des vorteilhaftesten',
+                fin_li2:'Finanzierung speziell für das Projekt Gran Via Residences vorbereitet',
+                fin_li3:'Kaufen Sie eine neue Wohnung und verkaufen Ihre bisherige Immobilie? Wir haben eine Lösung',
+                fin_li4:'Vollständige Beratung ohne versteckte Gebühren und Verpflichtungen',
+                fin_li5:'Wir lösen auch komplexe finanzielle Situationen und nichtstandardmäßige Fälle',
+                fin_banner:'Ihr Schlüssel zum neuen Zuhause —<br><strong>sorgenfrei</strong>.',
+                calc_title:'Berechnen Sie Ihre monatliche Rate', calc_price_label:'Kaufpreis der Immobilie',
+                calc_loan_label:'Ich benötige einen Kredit von', calc_years_label:'Ich möchte tilgen über', calc_years_unit:'Jahre',
+                calc_result_label:'Monatliche Rate', calc_rate_label:'Jährlicher Zinssatz',
+                calc_disclaimer:'Der Zinssatz ist indikativ und die Berechnung dient informativen Zwecken. Der tatsächliche Jahreszinssatz hängt vom konkreten Fall ab. Dies ist kein garantierter Zinssatz.',
+                calc_btn:'Unverbindlich anfragen',
+                cont_sub:'Schreiben Sie uns', cont_title:'Interessiert an einer Besichtigung?',
+                lbl_name:'Vor- und Nachname', lbl_email:'E-Mail', lbl_phone:'Telefon', lbl_message:'Ihre Nachricht',
+                btn_submit:'Unverbindliche Anfrage senden',
+                form_success:'Danke! Ihre Nachricht wurde gesendet. Wir melden uns so bald wie möglich bei Ihnen.',
+                agent_title:'Exklusiver Projektverkäufer',
+                footer_copy:'© 2026 Gran Via Development s.r.o. Alle Rechte vorbehalten.',
+                apt_tech:'Technische Informationen', apt_finance_btn:'Finanzierung', apt_contact_btn:'Ich interessiere mich',
+                apt_gallery_note:'Illustrationsfotos — die tatsächliche Situation kann abweichen.',
+                status_green:'Verfügbar', status_yellow:'Vorgemerkt', status_orange:'Reserviert', status_red:'Verkauft',
+                apt_status_label:'Status', floor_apts:'Apartments', floor_click:'Klicken zum Navigieren', apt_click:'Klicken für Apartmentdetails',
+            }
+        };
+
+        function applyLang(lang) {
+            currentLang = lang;
+            const t = T[lang];
+
+            // text content
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const k = el.dataset.i18n;
+                if (t[k] !== undefined) el.textContent = t[k];
+            });
+
+            // html content
+            document.querySelectorAll('[data-i18n-html]').forEach(el => {
+                const k = el.dataset.i18nHtml;
+                if (t[k] !== undefined) el.innerHTML = t[k];
+            });
+
+            // scrub text — re-split and re-animate
+            const scrubEl = document.getElementById('scrub-text');
+            if (scrubAnim) { scrubAnim.scrollTrigger && scrubAnim.scrollTrigger.kill(); scrubAnim.kill(); }
+            scrubEl.textContent = t.scrub;
+            splitTextWords(scrubEl);
+            scrubAnim = gsap.to('.highlight-text .word', {
+                color: '#111111', stagger: 0.08,
+                scrollTrigger: { trigger: '.scroll-text-sec', start: 'top 70%', end: 'bottom 80%', scrub: 1.2 }
+            });
+
+            // status badges in table
+            document.querySelectorAll('.status-badge').forEach(badge => {
+                const cls = ['green','yellow','orange','red'].find(c => badge.classList.contains(c));
+                if (cls) badge.textContent = t['status_' + cls];
+            });
+
+            // "Zobrazit" buttons in table
+            document.querySelectorAll('.btn-zobrazit').forEach(btn => { btn.textContent = t.show_btn; });
+
+            // update STATUS_LABEL used in dynamic tooltips
+            STATUS_LABEL.green  = t.status_green;
+            STATUS_LABEL.yellow = t.status_yellow;
+            STATUS_LABEL.orange = t.status_orange;
+            STATUS_LABEL.red    = t.status_red;
+
+            // update apt detail row label (Stav)
+            window._aptStatusLabel = t.apt_status_label;
+
+            // mortgage calculator currency switch
+            calcCfg = calcLimits[lang] || calcLimits.en;
+            document.getElementById('calc-price').value = formatNum(calcCfg.price.val);
+            document.getElementById('calc-loan').value  = formatNum(calcCfg.loan.val);
+            document.querySelectorAll('.calc-currency').forEach(el => {
+                el.textContent = lang === 'cs' ? 'Kč' : '€';
+            });
+            calcMortgage();
+
+            // prices — CZK for Czech, EUR for English/German
+            document.querySelectorAll('.price-cell').forEach(cell => {
+                const strong = cell.querySelector('strong');
+                if (!strong) return;
+                strong.textContent = lang === 'cs'
+                    ? cell.dataset.czk + '\u00a0Kč'
+                    : '€\u00a0' + cell.dataset.eur;
+            });
+
+            // active lang button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+        }
+
+        /* =============================================
+           REAL-TIME SYNC FROM ADMIN
+           ============================================= */
+        const GV_LS_KEY = 'granvia_apt_statuses';
+
+        const STATUS_LABEL_MAP = {
+            cs: { green:'Dostupné', yellow:'Zamluveno', orange:'Rezervováno', red:'Prodáno' },
+            en: { green:'Available', yellow:'Soft reserved', orange:'Reserved', red:'Sold' },
+            de: { green:'Verfügbar', yellow:'Vorgemerkt', orange:'Reserviert', red:'Verkauft' },
+        };
+
+        function applyAdminStatuses() {
+            let saved;
+            try { saved = JSON.parse(localStorage.getItem(GV_LS_KEY)) || {}; }
+            catch { saved = {}; }
+
+            Object.entries(saved).forEach(([code, entry]) => {
+                const status = entry.status;
+                if (!status) return;
+                const labels = STATUS_LABEL_MAP[currentLang] || STATUS_LABEL_MAP.cs;
+
+                // update table row
+                const rows = document.querySelectorAll('#table-body tr');
+                rows.forEach(tr => {
+                    const codeCell = tr.querySelector('td strong');
+                    if (!codeCell || codeCell.textContent.trim() !== code) return;
+                    tr.dataset.status = status;
+                    const badge = tr.querySelector('.status-badge');
+                    if (badge) {
+                        badge.className = `status-badge ${status}`;
+                        badge.textContent = labels[status] || status;
+                    }
+                    // hide row if filter active
+                    const activeFilter = document.querySelector('.filter-btn.active');
+                    if (activeFilter) {
+                        const f = activeFilter.dataset.filter;
+                        tr.style.display = (f === 'all' || f === status) ? '' : 'none';
+                    }
+                });
+
+                // update tableData in memory
+                if (tableData[code]) tableData[code].status = status;
+
+                // update STATUS_LABEL for tooltips
+                STATUS_LABEL[status] = labels[status];
+            });
+        }
+
+        // Apply on load
+        applyAdminStatuses();
+
+        // Live sync when admin page makes changes
+        window.addEventListener('storage', e => {
+            if (e.key === GV_LS_KEY) applyAdminStatuses();
+        });
+
+        /* =============================================
+           KONTAKTNÍ FORMULÁŘ
+           ============================================= */
+        document.getElementById("contact-form").addEventListener("submit", e => {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector(".btn-submit");
+            btn.textContent = "Odesílám...";
+            btn.disabled = true;
+            setTimeout(() => {
+                form.querySelectorAll("input, textarea").forEach(el => el.value = "");
+                btn.style.display = "none";
+                document.getElementById("form-success").style.display = "block";
+            }, 1200);
+        });
+    </script>
+</body>
+</html>

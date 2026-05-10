@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRAN VIA — Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --navy:       #1A2340;
+            --gold:       #E5A025;
+            --gold-bg:    rgba(229,160,37,0.1);
+            --bg:         #F4F6FB;
+            --surface:    #ffffff;
+            --border:     #E8ECF4;
+            --text:       #1A2340;
+            --muted:      #8C93A8;
+            --green:      #16A34A;  --green-bg:  #DCFCE7; --green-dot:  #22C55E;
+            --amber:      #B45309;  --amber-bg:  #FEF3C7; --amber-dot:  #F59E0B;
+            --orange:     #C2410C;  --orange-bg: #FFEDD5; --orange-dot: #F97316;
+            --red:        #DC2626;  --red-bg:    #FEE2E2; --red-dot:    #EF4444;
+        }
+
+        body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 220px; min-height:100vh; background:var(--navy);
+            display:flex; flex-direction:column; position:fixed; left:0; top:0; z-index:200;
+        }
+        .sidebar-logo {
+            display:flex; align-items:center; gap:11px;
+            padding:1.4rem 1.4rem 1.2rem;
+            border-bottom:1px solid rgba(255,255,255,0.07);
+        }
+        .logo-icon {
+            width:38px; height:38px; background:var(--gold); border-radius:9px;
+            display:flex; align-items:center; justify-content:center;
+            font-weight:800; font-size:0.8rem; color:#fff; flex-shrink:0;
+        }
+        .logo-text { font-weight:700; font-size:0.9rem; letter-spacing:2.5px; color:#fff; text-transform:uppercase; }
+        .sidebar-nav { flex:1; padding:0.75rem 0; overflow-y:auto; }
+        .nav-label {
+            font-size:0.6rem; letter-spacing:2px; text-transform:uppercase;
+            color:rgba(255,255,255,0.22); padding:0.9rem 1.4rem 0.3rem; font-weight:600;
+        }
+        .nav-item {
+            display:flex; align-items:center; gap:11px; padding:0.68rem 1.4rem;
+            color:rgba(255,255,255,0.5); font-size:0.855rem; font-weight:500;
+            border-left:3px solid transparent; cursor:pointer; text-decoration:none;
+            transition:all 0.15s;
+        }
+        .nav-item:hover { color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.05); }
+        .nav-item.active { color:var(--gold); background:var(--gold-bg); border-left-color:var(--gold); }
+        .nav-item i.icon { width:16px; text-align:center; font-size:0.82rem; }
+        .nav-arrow { margin-left:auto; font-size:0.6rem; opacity:0.4; }
+        .sidebar-footer { border-top:1px solid rgba(255,255,255,0.07); padding:1rem 1.4rem; }
+        .s-user { display:flex; align-items:center; gap:10px; }
+        .s-avatar {
+            width:32px; height:32px; border-radius:50%; background:var(--gold);
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.75rem; font-weight:700; color:#fff; flex-shrink:0;
+        }
+        .s-name { font-size:0.82rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .s-role { font-size:0.7rem; color:rgba(255,255,255,0.38); }
+
+        /* ── MAIN ── */
+        .main-wrap { margin-left:220px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background:var(--surface); border-bottom:1px solid var(--border);
+            padding:0 2rem; height:60px;
+            display:flex; align-items:center; justify-content:space-between;
+            position:sticky; top:0; z-index:100;
+        }
+        .breadcrumb { display:flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--muted); }
+        .breadcrumb i { font-size:0.78rem; }
+        .bc-sep { color:var(--border); }
+        .bc-cur { color:var(--gold); font-weight:500; }
+        .topbar-right { display:flex; align-items:center; gap:0.85rem; }
+        .tpill {
+            display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif;
+            font-size:0.78rem; color:var(--muted); background:var(--bg);
+            border:1px solid var(--border); padding:5px 13px; border-radius:20px;
+            cursor:pointer; text-decoration:none; transition:all 0.15s;
+        }
+        .tpill:hover { color:var(--text); border-color:var(--muted); }
+        .tpill.danger:hover { color:var(--red); border-color:var(--red-dot); }
+        .sync-dot {
+            width:7px; height:7px; border-radius:50%; background:var(--green-dot);
+            box-shadow:0 0 6px var(--green-dot); animation:pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .t-user { display:flex; align-items:center; gap:9px; }
+        .t-avatar {
+            width:34px; height:34px; border-radius:50%; background:var(--gold);
+            display:flex; align-items:center; justify-content:center;
+            font-weight:700; font-size:0.78rem; color:#fff;
+        }
+        .t-name { font-size:0.85rem; font-weight:600; color:var(--text); line-height:1.2; }
+        .t-role { font-size:0.72rem; color:var(--muted); }
+
+        /* ── PAGE ── */
+        .page-content { padding:1.75rem 2rem; flex:1; }
+        .pg { display:none; }
+        .pg.active { display:block; }
+        .page-title { font-size:1.55rem; font-weight:700; margin-bottom:1.4rem; }
+
+        /* ── STAT CARDS ── */
+        .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.6rem; }
+        .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.2rem 1.4rem; }
+        .stat-lbl { display:flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--muted); font-weight:500; margin-bottom:0.5rem; }
+        .stat-dot2 { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .stat-val { font-size:2rem; font-weight:700; line-height:1; }
+        .stat-card.green  .stat-val { color:var(--green-dot); }
+        .stat-card.amber  .stat-val { color:var(--amber-dot); }
+        .stat-card.orange .stat-val { color:var(--orange-dot); }
+        .stat-card.red    .stat-val { color:var(--red-dot); }
+
+        /* ── CARD ── */
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:1rem; }
+        .card-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:1rem 1.5rem; border-bottom:1px solid var(--border);
+        }
+        .card-title { font-weight:600; font-size:0.9rem; }
+        .card-sub { font-size:0.78rem; color:var(--muted); }
+
+        /* TABS */
+        .tab-bar { display:flex; border-bottom:1px solid var(--border); padding:0 1.5rem; }
+        .tab-btn {
+            padding:1rem 1.1rem; font-family:'Inter',sans-serif; font-size:0.87rem; font-weight:500;
+            color:var(--muted); background:none; border:none;
+            border-bottom:2px solid transparent; margin-bottom:-1px; cursor:pointer; transition:all 0.15s;
+        }
+        .tab-btn:hover { color:var(--text); }
+        .tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); }
+
+        /* TOOLBAR */
+        .toolbar { display:flex; align-items:center; gap:0.7rem; padding:1rem 1.5rem; border-bottom:1px solid var(--border); }
+        .search-wrap { position:relative; flex:0 0 240px; }
+        .search-wrap i { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:0.78rem; pointer-events:none; }
+        .search-input {
+            width:100%; border:1px solid var(--border); border-radius:8px;
+            padding:0.5rem 0.75rem 0.5rem 2.1rem;
+            font-family:'Inter',sans-serif; font-size:0.84rem; color:var(--text);
+            background:var(--surface); outline:none; transition:border-color 0.2s;
+        }
+        .search-input:focus { border-color:var(--gold); }
+        .search-input::placeholder { color:var(--muted); }
+        .filter-sel {
+            border:1px solid var(--border); border-radius:8px;
+            padding:0.5rem 2.1rem 0.5rem 0.75rem;
+            font-family:'Inter',sans-serif; font-size:0.84rem; color:var(--text);
+            background:var(--surface); outline:none; cursor:pointer; appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238C93A8' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat:no-repeat; background-position:right 9px center; transition:border-color 0.2s;
+        }
+        .filter-sel:focus { border-color:var(--gold); }
+        .toolbar-spacer { flex:1; }
+        .btn-outline {
+            display:inline-flex; align-items:center; gap:7px;
+            border:1px solid var(--border); background:var(--surface); color:var(--text);
+            border-radius:8px; padding:0.5rem 1rem;
+            font-family:'Inter',sans-serif; font-size:0.84rem; font-weight:500;
+            cursor:pointer; text-decoration:none; transition:all 0.15s;
+        }
+        .btn-outline:hover { border-color:var(--muted); background:var(--bg); }
+        .btn-primary {
+            display:inline-flex; align-items:center; gap:7px;
+            background:var(--navy); color:#fff; border:none; border-radius:8px;
+            padding:0.5rem 1.1rem; font-family:'Inter',sans-serif;
+            font-size:0.84rem; font-weight:600; cursor:pointer; transition:opacity 0.15s;
+        }
+        .btn-primary:hover { opacity:0.85; }
+
+        /* TABLE */
+        .table-wrap { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; }
+        thead th {
+            padding:0.8rem 1.2rem; font-size:0.78rem; font-weight:600; color:var(--muted);
+            text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; user-select:none;
+        }
+        thead th.sortable { cursor:pointer; }
+        thead th.sortable:hover { color:var(--text); }
+        .sort-icon { display:inline-flex; flex-direction:column; gap:1px; margin-left:4px; vertical-align:middle; opacity:0.4; }
+        .sort-icon i { font-size:0.48rem; line-height:1; }
+        .col-chk { width:44px; }
+        tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
+        tbody tr:last-child { border-bottom:none; }
+        tbody tr:hover { background:#F8FAFF; }
+        td { padding:0.85rem 1.2rem; font-size:0.85rem; vertical-align:middle; }
+        td input[type=checkbox], th input[type=checkbox] { width:15px; height:15px; accent-color:var(--navy); cursor:pointer; }
+        .apt-code { font-weight:600; color:var(--text); }
+        .apt-meta { color:#555; }
+
+        /* STATUS */
+        .status-badge {
+            display:inline-flex; align-items:center; gap:6px;
+            padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:500; white-space:nowrap;
+        }
+        .sdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+        .status-badge.green  { background:var(--green-bg);  color:var(--green);  }
+        .status-badge.amber  { background:var(--amber-bg);  color:var(--amber);  }
+        .status-badge.orange { background:var(--orange-bg); color:var(--orange); }
+        .status-badge.red    { background:var(--red-bg);    color:var(--red);    }
+        .status-badge.green  .sdot { background:var(--green-dot);  }
+        .status-badge.amber  .sdot { background:var(--amber-dot);  }
+        .status-badge.orange .sdot { background:var(--orange-dot); }
+        .status-badge.red    .sdot { background:var(--red-dot);    }
+        .status-cell { display:flex; align-items:center; gap:10px; }
+        .picker-dots { display:flex; align-items:center; gap:5px; }
+        .pdot {
+            width:11px; height:11px; border-radius:50%; cursor:pointer;
+            outline:2px solid transparent; outline-offset:2px; transition:all 0.15s; flex-shrink:0;
+        }
+        .pdot.green  { background:var(--green-dot); }
+        .pdot.amber  { background:var(--amber-dot); }
+        .pdot.orange { background:var(--orange-dot); }
+        .pdot.red    { background:var(--red-dot); }
+        .pdot.green.active  { outline-color:var(--green-dot); }
+        .pdot.amber.active  { outline-color:var(--amber-dot); }
+        .pdot.orange.active { outline-color:var(--orange-dot); }
+        .pdot.red.active    { outline-color:var(--red-dot); }
+        .pdot:hover { transform:scale(1.3); }
+        .pdot.active { transform:scale(1.2); }
+
+        /* NOTE */
+        .note-input {
+            border:1px solid var(--border); border-radius:6px; padding:5px 9px;
+            font-family:'Inter',sans-serif; font-size:0.8rem; color:var(--text);
+            background:transparent; width:155px; outline:none; transition:border-color 0.2s;
+        }
+        .note-input:focus { border-color:var(--gold); }
+        .note-input::placeholder { color:var(--muted); }
+        .ts { font-size:0.75rem; color:var(--muted); white-space:nowrap; }
+        .ts-user { font-size:0.7rem; color:#bbb; }
+        .action-btns { display:flex; align-items:center; gap:5px; }
+        .act-btn {
+            width:29px; height:29px; border-radius:6px; border:1px solid var(--border);
+            background:transparent; color:var(--muted);
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; font-size:0.74rem; transition:all 0.15s;
+        }
+        .act-btn:hover { border-color:var(--muted); color:var(--text); }
+        .act-btn.danger:hover { border-color:var(--red-dot); color:var(--red-dot); }
+
+        /* PAGINATION */
+        .pg-bar { display:flex; align-items:center; justify-content:space-between; padding:0.9rem 1.5rem; border-top:1px solid var(--border); }
+        .pg-info { font-size:0.8rem; color:var(--muted); }
+        .pg-btns { display:flex; align-items:center; gap:4px; }
+        .pgbtn {
+            min-width:32px; height:32px; border-radius:6px; border:1px solid var(--border);
+            background:transparent; color:var(--muted); font-size:0.8rem;
+            font-family:'Inter',sans-serif; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; gap:4px; padding:0 9px; transition:all 0.15s;
+        }
+        .pgbtn:hover { border-color:var(--muted); color:var(--text); }
+        .pgbtn.active { background:var(--navy); border-color:var(--navy); color:#fff; }
+
+        /* ── DASHBOARD ── */
+        .dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+        .dash-greeting { margin-bottom:1.4rem; }
+        .dash-greeting h1 { font-size:1.4rem; font-weight:700; }
+        .dash-greeting p { font-size:0.85rem; color:var(--muted); margin-top:3px; }
+        .activity-item { display:flex; align-items:center; gap:12px; padding:0.8rem 1.5rem; border-bottom:1px solid var(--border); }
+        .activity-item:last-child { border-bottom:none; }
+        .act-icon {
+            width:32px; height:32px; border-radius:8px;
+            display:flex; align-items:center; justify-content:center; font-size:0.75rem; flex-shrink:0;
+        }
+        .act-info { flex:1; }
+        .act-code { font-weight:500; font-size:0.84rem; }
+        .act-detail { font-size:0.76rem; color:var(--muted); }
+
+        /* ── STATISTIKY ── */
+        .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+        .bar-row { display:flex; align-items:center; gap:12px; padding:0.9rem 1.25rem; border-bottom:1px solid var(--border); }
+        .bar-row:last-child { border-bottom:none; }
+        .bar-lbl { width:105px; flex-shrink:0; }
+        .bar-track { flex:1; height:8px; background:var(--bg); border-radius:4px; overflow:hidden; }
+        .bar-fill { height:100%; border-radius:4px; transition:width 0.6s cubic-bezier(.4,0,.2,1); }
+        .bar-count { width:28px; text-align:right; font-size:0.84rem; font-weight:600; flex-shrink:0; }
+        .bar-pct { width:36px; text-align:right; font-size:0.78rem; color:var(--muted); flex-shrink:0; }
+
+        /* ── NASTAVENÍ ── */
+        .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+        .setting-row { display:flex; align-items:center; justify-content:space-between; padding:0.9rem 1.5rem; border-bottom:1px solid var(--border); }
+        .setting-row:last-child { border-bottom:none; }
+        .setting-label { font-size:0.84rem; font-weight:500; }
+        .setting-value { font-size:0.84rem; color:var(--muted); }
+
+        /* ── EMPTY STATE ── */
+        .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:5rem 2rem; text-align:center; }
+        .empty-icon {
+            width:72px; height:72px; background:var(--bg); border:1px solid var(--border); border-radius:50%;
+            display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:var(--muted); margin-bottom:1.25rem;
+        }
+        .empty-title { font-size:1rem; font-weight:600; color:var(--text); margin-bottom:0.4rem; }
+        .empty-desc { font-size:0.85rem; color:var(--muted); max-width:280px; }
+        .badge-soon {
+            display:inline-block; background:var(--gold-bg); color:var(--gold);
+            font-size:0.72rem; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+            padding:4px 12px; border-radius:20px; margin-top:1.25rem;
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position:fixed; bottom:2rem; right:2rem; background:var(--surface);
+            border:1px solid var(--border); border-left:3px solid var(--green-dot);
+            color:var(--text); padding:0.75rem 1.25rem; border-radius:8px;
+            font-size:0.82rem; box-shadow:0 4px 20px rgba(0,0,0,0.08);
+            opacity:0; transform:translateY(8px); transition:all 0.2s; pointer-events:none; z-index:999;
+        }
+        .toast.show { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">GV</div>
+        <span class="logo-text">Gran Via</span>
+    </div>
+    <nav class="sidebar-nav">
+        <span class="nav-label">Hlavní</span>
+        <a class="nav-item" data-pg="dashboard" href="#" onclick="navigate('dashboard');return false;">
+            <i class="fa-solid fa-gauge-high icon"></i> Dashboard
+        </a>
+        <a class="nav-item active" data-pg="apartmany" href="#" onclick="navigate('apartmany');return false;">
+            <i class="fa-solid fa-building icon"></i> Apartmány
+        </a>
+        <a class="nav-item" data-pg="statistiky" href="#" onclick="navigate('statistiky');return false;">
+            <i class="fa-solid fa-chart-pie icon"></i> Statistiky
+        </a>
+
+        <span class="nav-label" style="margin-top:.5rem">Správa</span>
+        <a class="nav-item" data-pg="klienti" href="#" onclick="navigate('klienti');return false;">
+            <i class="fa-solid fa-users icon"></i> Klienti
+        </a>
+        <a class="nav-item" data-pg="smlouvy" href="#" onclick="navigate('smlouvy');return false;">
+            <i class="fa-solid fa-file-contract icon"></i> Smlouvy
+        </a>
+<span class="nav-label" style="margin-top:.5rem">Systém</span>
+        <a class="nav-item" data-pg="fakturace" href="#" onclick="navigate('fakturace');return false;">
+            <i class="fa-solid fa-file-invoice icon"></i> Fakturace
+        </a>
+        <a class="nav-item" data-pg="reporty" href="#" onclick="navigate('reporty');return false;">
+            <i class="fa-solid fa-chart-bar icon"></i> Reporty
+        </a>
+        <a class="nav-item" data-pg="nastaveni" href="#" onclick="navigate('nastaveni');return false;">
+            <i class="fa-solid fa-gear icon"></i> Nastavení
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="s-user">
+            <div class="s-avatar" id="s-avatar">A</div>
+            <div style="flex:1;min-width:0">
+                <div class="s-name" id="s-name">Admin</div>
+                <div class="s-role" id="s-role">—</div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- ── MAIN ─────────────────────────────────────────────────────── -->
+<div class="main-wrap">
+    <header class="topbar">
+        <div class="breadcrumb">
+            <i class="fa-solid fa-house"></i>
+            <span class="bc-sep">/</span>
+            <span class="bc-cur" id="bc-cur">Apartmány</span>
+        </div>
+        <div class="topbar-right">
+            <div class="tpill"><div class="sync-dot"></div> Živá synchronizace</div>
+            <a href="/" target="_blank" class="tpill">
+                <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.7rem"></i> Náhled webu
+            </a>
+            <form method="POST" action="/api/logout" style="margin:0">
+                <button type="submit" class="tpill danger">
+                    <i class="fa-solid fa-right-from-bracket" style="font-size:.7rem"></i> Odhlásit
+                </button>
+            </form>
+            <div class="t-user">
+                <div class="t-avatar" id="t-avatar">A</div>
+                <div>
+                    <div class="t-name" id="t-name">Admin</div>
+                    <div class="t-role" id="t-role">—</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-content">
+
+        <!-- ══ DASHBOARD ══════════════════════════════════════════════ -->
+        <section class="pg" id="pg-dashboard">
+            <div class="dash-greeting">
+                <h1 id="dash-hello">Dobrý den!</h1>
+                <p id="dash-date"></p>
+            </div>
+
+            <div class="stats-row" id="dash-stats"></div>
+
+            <div class="dash-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Naposledy upraveno</span>
+                        <span class="card-sub">posledních 10 změn</span>
+                    </div>
+                    <div id="dash-activity">
+                        <div style="padding:2rem;text-align:center;color:var(--muted);font-size:.84rem">Zatím žádné změny.</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Rychlý přehled</span>
+                    </div>
+                    <div id="dash-quick"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ APARTMÁNY ═══════════════════════════════════════════════ -->
+        <section class="pg active" id="pg-apartmany">
+            <h1 class="page-title">Apartmány</h1>
+
+            <div class="stats-row">
+                <div class="stat-card green">
+                    <div class="stat-lbl"><span class="stat-dot2" style="background:var(--green-dot)"></span>Volno</div>
+                    <div class="stat-val" id="stat-green">—</div>
+                </div>
+                <div class="stat-card amber">
+                    <div class="stat-lbl"><span class="stat-dot2" style="background:var(--amber-dot)"></span>Zamluveno</div>
+                    <div class="stat-val" id="stat-yellow">—</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-lbl"><span class="stat-dot2" style="background:var(--orange-dot)"></span>Rezervováno</div>
+                    <div class="stat-val" id="stat-orange">—</div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-lbl"><span class="stat-dot2" style="background:var(--red-dot)"></span>Prodáno</div>
+                    <div class="stat-val" id="stat-red">—</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="tab-bar">
+                    <button class="tab-btn active" onclick="switchTab(this)">Přehled</button>
+                    <button class="tab-btn" onclick="switchTab(this)">Podlaží</button>
+                    <button class="tab-btn" onclick="switchTab(this)">Aktivita</button>
+                </div>
+                <div class="toolbar">
+                    <div class="search-wrap">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" class="search-input" id="search-input" placeholder="Hledat kód, dispozici…" oninput="renderTable()">
+                    </div>
+                    <select class="filter-sel" id="status-filter" onchange="renderTable()">
+                        <option value="">Všechny stavy</option>
+                        <option value="green">Volno</option>
+                        <option value="yellow">Zamluveno</option>
+                        <option value="orange">Rezervováno</option>
+                        <option value="red">Prodáno</option>
+                    </select>
+                    <div class="toolbar-spacer"></div>
+                    <button class="btn-outline" onclick="resetAll()">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <a href="/" target="_blank" class="btn-outline">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Export
+                    </a>
+                    <button class="btn-primary"><i class="fa-solid fa-plus"></i> Přidat</button>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="col-chk"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"></th>
+                                <th class="sortable">Kód <span class="sort-icon"><i class="fa-solid fa-caret-up"></i><i class="fa-solid fa-caret-down"></i></span></th>
+                                <th>Podlaží</th>
+                                <th>Dispozice</th>
+                                <th class="sortable">Plocha <span class="sort-icon"><i class="fa-solid fa-caret-up"></i><i class="fa-solid fa-caret-down"></i></span></th>
+                                <th class="sortable">Stav <span class="sort-icon"><i class="fa-solid fa-caret-up"></i><i class="fa-solid fa-caret-down"></i></span></th>
+                                <th>Poznámka</th>
+                                <th class="sortable">Poslední změna <span class="sort-icon"><i class="fa-solid fa-caret-up"></i><i class="fa-solid fa-caret-down"></i></span></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="pg-bar">
+                    <div class="pg-info">Zobrazeno <strong id="shown-count">—</strong> z <strong id="total-count">—</strong> apartmánů</div>
+                    <div class="pg-btns">
+                        <button class="pgbtn"><i class="fa-solid fa-angles-left"></i> První</button>
+                        <button class="pgbtn"><i class="fa-solid fa-angle-left"></i> Předchozí</button>
+                        <button class="pgbtn active">1</button>
+                        <button class="pgbtn">Další <i class="fa-solid fa-angle-right"></i></button>
+                        <button class="pgbtn">Poslední <i class="fa-solid fa-angles-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ STATISTIKY ══════════════════════════════════════════════ -->
+        <section class="pg" id="pg-statistiky">
+            <h1 class="page-title">Statistiky</h1>
+            <div class="stat-grid">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Rozdělení stavů</span></div>
+                    <div id="stat-dist"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Podle podlaží</span></div>
+                    <div id="stat-floors"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">Přehled plochy</span><span class="card-sub">m² dle stavu</span></div>
+                <div id="stat-area"></div>
+            </div>
+        </section>
+
+        <!-- ══ KLIENTI ════════════════════════════════════════════════ -->
+        <section class="pg" id="pg-klienti">
+            <h1 class="page-title">Klienti</h1>
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="empty-title">Správa klientů</div>
+                    <div class="empty-desc">Evidence klientů, jejich kontaktů a přiřazených apartmánů bude brzy k dispozici.</div>
+                    <span class="badge-soon">Brzy k dispozici</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ SMLOUVY ════════════════════════════════════════════════ -->
+        <section class="pg" id="pg-smlouvy">
+            <h1 class="page-title">Smlouvy</h1>
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-file-contract"></i></div>
+                    <div class="empty-title">Správa smluv</div>
+                    <div class="empty-desc">Správa kupních smluv, rezervačních dohod a dalších dokumentů.</div>
+                    <span class="badge-soon">Brzy k dispozici</span>
+                </div>
+            </div>
+        </section>
+
+<!-- ══ FAKTURACE ══════════════════════════════════════════════ -->
+        <section class="pg" id="pg-fakturace">
+            <h1 class="page-title">Fakturace</h1>
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                    <div class="empty-title">Fakturace a platby</div>
+                    <div class="empty-desc">Přehled faktur, splátkových kalendářů a platebních stavů.</div>
+                    <span class="badge-soon">Brzy k dispozici</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ REPORTY ════════════════════════════════════════════════ -->
+        <section class="pg" id="pg-reporty">
+            <h1 class="page-title">Reporty</h1>
+            <div class="card">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-chart-bar"></i></div>
+                    <div class="empty-title">Reporty a analýzy</div>
+                    <div class="empty-desc">Exporty a přehledy prodejní výkonnosti, obsazenosti a trendů.</div>
+                    <span class="badge-soon">Brzy k dispozici</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ NASTAVENÍ ══════════════════════════════════════════════ -->
+        <section class="pg" id="pg-nastaveni">
+            <h1 class="page-title">Nastavení</h1>
+            <div class="settings-grid">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Přihlášený uživatel</span></div>
+                    <div>
+                        <div class="setting-row">
+                            <span class="setting-label">Jméno</span>
+                            <span class="setting-value" id="set-name">—</span>
+                        </div>
+                        <div class="setting-row">
+                            <span class="setting-label">Uživatelské jméno</span>
+                            <span class="setting-value" id="set-user">—</span>
+                        </div>
+                        <div class="setting-row">
+                            <span class="setting-label">Role</span>
+                            <span class="setting-value" id="set-role">—</span>
+                        </div>
+                        <div class="setting-row">
+                            <span class="setting-label">Odhlásit se</span>
+                            <form method="POST" action="/api/logout">
+                                <button type="submit" class="btn-outline" style="font-size:.8rem;padding:.4rem .9rem">
+                                    <i class="fa-solid fa-right-from-bracket"></i> Odhlásit
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Správa dat</span></div>
+                    <div>
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-label">Náhled webu</div>
+                                <div style="font-size:.78rem;color:var(--muted);margin-top:2px">Otevřít prodejní stránku</div>
+                            </div>
+                            <a href="/" target="_blank" class="btn-outline" style="font-size:.8rem;padding:.4rem .9rem">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Otevřít
+                            </a>
+                        </div>
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-label">Obnovit výchozí stavy</div>
+                                <div style="font-size:.78rem;color:var(--muted);margin-top:2px">Vrátí všechny apartmány na původní stav</div>
+                            </div>
+                            <button onclick="resetAll()" class="btn-outline" style="font-size:.8rem;padding:.4rem .9rem;border-color:var(--red-dot);color:var(--red)">
+                                <i class="fa-solid fa-rotate-left"></i> Reset
+                            </button>
+                        </div>
+                        <div class="setting-row">
+                            <div>
+                                <div class="setting-label">Aplikace</div>
+                                <div style="font-size:.78rem;color:var(--muted);margin-top:2px">Gran Via Admin Panel</div>
+                            </div>
+                            <span class="setting-value">v1.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const LS_KEY = 'granvia_apt_statuses';
+
+    const APTS = [
+        { code:'GV-101', floor:'2. NP', layout:'1+kk', area:51.0,  areaStr:'51,0 m²',  defaultStatus:'orange' },
+        { code:'GV-102', floor:'2. NP', layout:'2+kk', area:78.9,  areaStr:'78,9 m²',  defaultStatus:'orange' },
+        { code:'GV-103', floor:'2. NP', layout:'2+kk', area:85.1,  areaStr:'85,1 m²',  defaultStatus:'green'  },
+        { code:'GV-104', floor:'2. NP', layout:'3+kk', area:109.8, areaStr:'109,8 m²', defaultStatus:'green'  },
+        { code:'GV-105', floor:'2. NP', layout:'4+kk', area:139.9, areaStr:'139,9 m²', defaultStatus:'yellow' },
+        { code:'GV-106', floor:'3. NP', layout:'1+kk', area:48.2,  areaStr:'48,2 m²',  defaultStatus:'red'    },
+        { code:'GV-107', floor:'3. NP', layout:'2+kk', area:81.0,  areaStr:'81,0 m²',  defaultStatus:'green'  },
+        { code:'GV-108', floor:'3. NP', layout:'3+kk', area:112.6, areaStr:'112,6 m²', defaultStatus:'orange' },
+        { code:'GV-109', floor:'3. NP', layout:'2+kk', area:83.3,  areaStr:'83,3 m²',  defaultStatus:'red'    },
+        { code:'GV-110', floor:'4. NP', layout:'Penthouse', area:227.0, areaStr:'227,0 m²', defaultStatus:'yellow' },
+    ];
+
+    const STATUS_LABELS = { green:'Volno', yellow:'Zamluveno', orange:'Rezervováno', red:'Prodáno' };
+    const CSS_CLS = { green:'green', yellow:'amber', orange:'orange', red:'red' };
+
+    const PAGE_LABELS = {
+        dashboard:'Dashboard', apartmany:'Apartmány', statistiky:'Statistiky',
+        klienti:'Klienti', smlouvy:'Smlouvy',
+        fakturace:'Fakturace', reporty:'Reporty', nastaveni:'Nastavení',
+    };
+
+    function loadData() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } }
+    function saveData(d) { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
+
+    function getCounts(data) {
+        data = data || loadData();
+        const c = { green:0, yellow:0, orange:0, red:0 };
+        APTS.forEach(a => { const s = (data[a.code] && data[a.code].status) || a.defaultStatus; c[s]++; });
+        return c;
+    }
+
+    function formatTs(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return d.toLocaleDateString('cs-CZ') + ' ' + d.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(t._t);
+        t._t = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    function updateStats(data) {
+        data = data || loadData();
+        const c = getCounts(data);
+        ['green','yellow','orange','red'].forEach(s => {
+            const el = document.getElementById('stat-' + s);
+            if (el) el.textContent = c[s];
+        });
+    }
+
+    let currentUser = { username:'', label:'Admin', color:'#E5A025' };
+
+    async function loadCurrentUser() {
+        try {
+            const r = await fetch('/api/me');
+            if (!r.ok) return;
+            currentUser = await r.json();
+            const init = currentUser.label[0].toUpperCase();
+            ['s-avatar','t-avatar'].forEach(id => document.getElementById(id).textContent = init);
+            document.getElementById('s-name').textContent = currentUser.label;
+            document.getElementById('s-role').textContent = currentUser.username;
+            document.getElementById('t-name').textContent = currentUser.label;
+            document.getElementById('t-role').textContent = currentUser.username;
+            document.getElementById('set-name').textContent = currentUser.label;
+            document.getElementById('set-user').textContent = currentUser.username;
+            document.getElementById('set-role').textContent = currentUser.username;
+        } catch {}
+    }
+
+    /* ── ROUTER ─────────────────────────────────────────────────────── */
+    function navigate(page) {
+        document.querySelectorAll('.nav-item[data-pg]').forEach(el =>
+            el.classList.toggle('active', el.dataset.pg === page)
+        );
+        document.getElementById('bc-cur').textContent = PAGE_LABELS[page] || page;
+        document.querySelectorAll('.pg').forEach(el => {
+            el.classList.toggle('active', el.id === 'pg-' + page);
+        });
+        if (page === 'dashboard')  renderDashboard();
+        if (page === 'statistiky') renderStatistiky();
+    }
+
+    /* ── DASHBOARD ──────────────────────────────────────────────────── */
+    function renderDashboard() {
+        const data = loadData();
+        const counts = getCounts(data);
+
+        // Greeting
+        const h = new Date().getHours();
+        const greet = h < 12 ? 'Dobré ráno' : h < 18 ? 'Dobrý den' : 'Dobrý večer';
+        document.getElementById('dash-hello').textContent = `${greet}, ${currentUser.label}!`;
+        document.getElementById('dash-date').textContent = new Date().toLocaleDateString('cs-CZ', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+        // Mini stat cards
+        const statItems = [
+            { key:'green',  lbl:'Volno',       cls:'green',  dot:'--green-dot'  },
+            { key:'yellow', lbl:'Zamluveno',   cls:'amber',  dot:'--amber-dot'  },
+            { key:'orange', lbl:'Rezervováno', cls:'orange', dot:'--orange-dot' },
+            { key:'red',    lbl:'Prodáno',     cls:'red',    dot:'--red-dot'    },
+        ];
+        document.getElementById('dash-stats').innerHTML = statItems.map(i => `
+            <div class="stat-card ${i.cls}">
+                <div class="stat-lbl"><span class="stat-dot2" style="background:var(${i.dot})"></span>${i.lbl}</div>
+                <div class="stat-val">${counts[i.key]}</div>
+            </div>
+        `).join('');
+
+        // Activity
+        const entries = Object.entries(data)
+            .filter(([, v]) => v.updatedAt)
+            .sort(([, a], [, b]) => new Date(b.updatedAt) - new Date(a.updatedAt))
+            .slice(0, 10);
+
+        const actEl = document.getElementById('dash-activity');
+        if (!entries.length) {
+            actEl.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:.84rem">Zatím žádné změny.</div>';
+        } else {
+            actEl.innerHTML = entries.map(([code, entry]) => {
+                const apt = APTS.find(a => a.code === code);
+                const cls = CSS_CLS[entry.status];
+                return `
+                    <div class="activity-item">
+                        <div class="act-icon" style="background:var(--${cls}-bg);color:var(--${cls}-dot)">
+                            <i class="fa-solid fa-building"></i>
+                        </div>
+                        <div class="act-info">
+                            <div class="act-code">${code}</div>
+                            <div class="act-detail">${apt ? apt.layout + ' · ' + apt.areaStr : ''}</div>
+                        </div>
+                        <span class="status-badge ${cls}"><span class="sdot"></span>${STATUS_LABELS[entry.status]}</span>
+                        <div class="ts" style="text-align:right">
+                            ${formatTs(entry.updatedAt)}
+                            ${entry.userLabel ? `<div class="ts-user">${entry.userLabel}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Quick overview
+        const total = APTS.length;
+        const sold  = counts.red;
+        const free  = counts.green;
+        document.getElementById('dash-quick').innerHTML = `
+            <div class="setting-row"><span class="setting-label">Celkem apartmánů</span><span style="font-weight:700">${total}</span></div>
+            <div class="setting-row"><span class="setting-label">Prodáno</span><span style="font-weight:700;color:var(--red-dot)">${sold}</span></div>
+            <div class="setting-row"><span class="setting-label">Volných</span><span style="font-weight:700;color:var(--green-dot)">${free}</span></div>
+            <div class="setting-row"><span class="setting-label">Obsazenost</span><span style="font-weight:700">${Math.round((total-free)/total*100)} %</span></div>
+            <div class="setting-row"><span class="setting-label">Celková plocha</span><span style="font-weight:700">${APTS.reduce((s,a)=>s+a.area,0).toLocaleString('cs-CZ')} m²</span></div>
+        `;
+    }
+
+    /* ── STATISTIKY ─────────────────────────────────────────────────── */
+    function renderStatistiky() {
+        const data   = loadData();
+        const counts = getCounts(data);
+        const total  = APTS.length;
+
+        // Distribution bars
+        const distItems = [
+            { key:'green',  lbl:'Volno',       cls:'green',  dot:'--green-dot'  },
+            { key:'yellow', lbl:'Zamluveno',   cls:'amber',  dot:'--amber-dot'  },
+            { key:'orange', lbl:'Rezervováno', cls:'orange', dot:'--orange-dot' },
+            { key:'red',    lbl:'Prodáno',     cls:'red',    dot:'--red-dot'    },
+        ];
+        document.getElementById('stat-dist').innerHTML = distItems.map(i => {
+            const n   = counts[i.key];
+            const pct = Math.round(n / total * 100);
+            return `
+                <div class="bar-row">
+                    <div class="bar-lbl">
+                        <span class="status-badge ${i.cls}" style="font-size:.75rem;padding:3px 8px">
+                            <span class="sdot"></span>${i.lbl}
+                        </span>
+                    </div>
+                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(${i.dot})"></div></div>
+                    <div class="bar-count" style="color:var(${i.dot})">${n}</div>
+                    <div class="bar-pct">${pct} %</div>
+                </div>
+            `;
+        }).join('');
+
+        // Per-floor table
+        const floors = [...new Set(APTS.map(a => a.floor))];
+        document.getElementById('stat-floors').innerHTML = `
+            <table style="width:100%;border-collapse:collapse">
+                <thead>
+                    <tr>
+                        ${['Podlaží','Volno','Zamluveno','Rezervováno','Prodáno','Celkem'].map((h,i) =>
+                            `<th style="padding:.7rem 1.25rem;font-size:.75rem;color:var(--muted);${i>0?'text-align:center;':''}border-bottom:1px solid var(--border)">${h}</th>`
+                        ).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${floors.map(floor => {
+                        const fa = APTS.filter(a => a.floor === floor);
+                        const fc = { green:0, yellow:0, orange:0, red:0 };
+                        fa.forEach(a => { const s=(data[a.code]&&data[a.code].status)||a.defaultStatus; fc[s]++; });
+                        return `
+                            <tr style="border-bottom:1px solid var(--border)">
+                                <td style="padding:.75rem 1.25rem;font-weight:500;font-size:.84rem">${floor}</td>
+                                <td style="padding:.75rem 1.25rem;text-align:center;font-size:.84rem;color:var(--green-dot);font-weight:600">${fc.green||'—'}</td>
+                                <td style="padding:.75rem 1.25rem;text-align:center;font-size:.84rem;color:var(--amber-dot);font-weight:600">${fc.yellow||'—'}</td>
+                                <td style="padding:.75rem 1.25rem;text-align:center;font-size:.84rem;color:var(--orange-dot);font-weight:600">${fc.orange||'—'}</td>
+                                <td style="padding:.75rem 1.25rem;text-align:center;font-size:.84rem;color:var(--red-dot);font-weight:600">${fc.red||'—'}</td>
+                                <td style="padding:.75rem 1.25rem;text-align:center;font-size:.84rem;font-weight:700">${fa.length}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+
+        // Area by status
+        const areaBySt = { green:0, yellow:0, orange:0, red:0 };
+        APTS.forEach(a => {
+            const s = (data[a.code] && data[a.code].status) || a.defaultStatus;
+            areaBySt[s] += a.area;
+        });
+        const totalArea = APTS.reduce((s,a) => s+a.area, 0);
+        document.getElementById('stat-area').innerHTML = distItems.map(i => {
+            const m2  = areaBySt[i.key];
+            const pct = Math.round(m2 / totalArea * 100);
+            return `
+                <div class="bar-row">
+                    <div class="bar-lbl">
+                        <span class="status-badge ${i.cls}" style="font-size:.75rem;padding:3px 8px">
+                            <span class="sdot"></span>${i.lbl}
+                        </span>
+                    </div>
+                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(${i.dot})"></div></div>
+                    <div class="bar-count" style="color:var(${i.dot});width:70px">${m2.toLocaleString('cs-CZ',{maximumFractionDigits:1})} m²</div>
+                    <div class="bar-pct">${pct} %</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /* ── APARTMÁNY TABLE ────────────────────────────────────────────── */
+    function setStatus(code, status) {
+        const data = loadData();
+        data[code] = {
+            status,
+            note:      (data[code] && data[code].note) || '',
+            updatedAt: new Date().toISOString(),
+            userLabel: currentUser.label,
+            userColor: currentUser.color,
+            username:  currentUser.username,
+        };
+        saveData(data);
+        renderTable();
+        showToast(`${code} → ${STATUS_LABELS[status]}`);
+    }
+
+    function setNote(code, note) {
+        const data = loadData();
+        if (!data[code]) data[code] = { status: APTS.find(a => a.code === code).defaultStatus };
+        Object.assign(data[code], { note, updatedAt:new Date().toISOString(), userLabel:currentUser.label, userColor:currentUser.color, username:currentUser.username });
+        saveData(data);
+        updateStats(data);
+    }
+
+    function resetAll() {
+        if (!confirm('Obnovit všechny stavy na výchozí hodnoty?')) return;
+        localStorage.removeItem(LS_KEY);
+        renderTable();
+        showToast('Stavy obnoveny na výchozí hodnoty');
+    }
+
+    function switchTab(btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    function toggleAll(master) {
+        document.querySelectorAll('#admin-tbody input[type=checkbox]').forEach(cb => cb.checked = master.checked);
+    }
+
+    function renderTable() {
+        const data    = loadData();
+        const search  = document.getElementById('search-input').value.toLowerCase();
+        const sfilt   = document.getElementById('status-filter').value;
+        const tbody   = document.getElementById('admin-tbody');
+        tbody.innerHTML = '';
+
+        const filtered = APTS.filter(a => {
+            const s = (data[a.code] && data[a.code].status) || a.defaultStatus;
+            if (sfilt && s !== sfilt) return false;
+            if (search && !a.code.toLowerCase().includes(search) && !a.layout.toLowerCase().includes(search) && !a.floor.toLowerCase().includes(search)) return false;
+            return true;
+        });
+
+        document.getElementById('shown-count').textContent = filtered.length;
+        document.getElementById('total-count').textContent = APTS.length;
+
+        filtered.forEach(apt => {
+            const saved  = data[apt.code] || {};
+            const status = saved.status || apt.defaultStatus;
+            const note   = saved.note   || '';
+            const cls    = CSS_CLS[status];
+            const tr     = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="checkbox"></td>
+                <td><span class="apt-code">${apt.code}</span></td>
+                <td style="color:var(--muted);font-size:.8rem">${apt.floor}</td>
+                <td class="apt-meta">${apt.layout}</td>
+                <td class="apt-meta">${apt.areaStr}</td>
+                <td>
+                    <div class="status-cell">
+                        <div class="picker-dots">
+                            ${Object.entries(STATUS_LABELS).map(([s]) => `
+                                <div class="pdot ${CSS_CLS[s]}${status===s?' active':''}"
+                                     title="${STATUS_LABELS[s]}"
+                                     onclick="setStatus('${apt.code}','${s}')"></div>
+                            `).join('')}
+                        </div>
+                        <span class="status-badge ${cls}"><span class="sdot"></span>${STATUS_LABELS[status]}</span>
+                    </div>
+                </td>
+                <td>
+                    <input class="note-input" type="text" placeholder="Interní poznámka…"
+                           value="${note.replace(/"/g,'&quot;')}"
+                           onchange="setNote('${apt.code}',this.value)"
+                           onblur="setNote('${apt.code}',this.value)">
+                </td>
+                <td class="ts">
+                    ${formatTs(saved.updatedAt)}
+                    ${saved.userLabel ? `<div class="ts-user">${saved.userLabel}</div>` : ''}
+                </td>
+                <td>
+                    <div class="action-btns">
+                        <button class="act-btn" title="Detail"><i class="fa-regular fa-eye"></i></button>
+                        <button class="act-btn" title="Upravit"><i class="fa-regular fa-pen-to-square"></i></button>
+                        <button class="act-btn danger" title="Smazat"><i class="fa-regular fa-trash-can"></i></button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        updateStats(data);
+    }
+
+    /* ── INIT ───────────────────────────────────────────────────────── */
+    loadCurrentUser().then(() => renderTable());
+    window.addEventListener('storage', e => { if (e.key === LS_KEY) renderTable(); });
+</script>
+</body>
+</html>
