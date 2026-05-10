@@ -1907,12 +1907,12 @@
         document.getElementById('k-back-btn').addEventListener('click', () => {
             if (!kCurrentFloor) return;
             const floor = kCurrentFloor;
-            kPlanOverlay.classList.remove('active');
 
             playVideo(
                 floor.reverseVideo,
                 () => {
-                    // Reverse ready — show overlay
+                    // Reverse ready — NOW swap: hide plan, show video in one frame
+                    kPlanOverlay.classList.remove('active');
                     kVideoOverlay.classList.add('active');
                 },
                 () => {
