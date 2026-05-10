@@ -1454,7 +1454,26 @@
             .to(".hero-title-svg", { opacity: 1, scale: 1, duration: 1, ease: "back.out(1.7)" }, "-=0.5")
             .to(".hero-title span", { y: 0, stagger: 0.08, duration: 0.8, ease: "power4.out" }, "-=0.7")
             .to("#hero-scroll-hint", { opacity: 1, duration: 0.6 }, "-=0.2")
-            .call(() => { document.getElementById("preloader").style.display = "none"; });
+            .call(() => {
+                document.getElementById("preloader").style.display = "none";
+                // Sequential video preload — forward videos first, then reverse
+                const preloadQueue = [
+                    '1np.mp4','2np.mp4','3np.mp4','4np.mp4','5np.mp4','6np.mp4',
+                    '1np-reverse.mp4','2np-reverse.mp4','3np-reverse.mp4','4np-reverse.mp4','5np-reverse.mp4','6np-reverse.mp4'
+                ];
+                function preloadNext(i) {
+                    if (i >= preloadQueue.length) return;
+                    const src = preloadQueue[i];
+                    if (videoCache[src]) { preloadNext(i + 1); return; }
+                    const v = document.createElement('video');
+                    v.preload = 'auto';
+                    v.src = src;
+                    videoCache[src] = v;
+                    v.oncanplaythrough = () => preloadNext(i + 1);
+                    v.onerror = () => preloadNext(i + 1);
+                }
+                preloadNext(0);
+            });
 
         /* =============================================
            SCRUB TEXT
