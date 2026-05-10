@@ -509,6 +509,7 @@
         @keyframes aptBreatheYellow { 0%,100% { fill: rgba(202,138,4,0.15); } 50% { fill: rgba(202,138,4,0.5); } }
         @keyframes aptBreatheOrange { 0%,100% { fill: rgba(217,119,6,0.15); } 50% { fill: rgba(217,119,6,0.5); } }
         @keyframes aptBreatheRed    { 0%,100% { fill: rgba(220,38,38,0.15); } 50% { fill: rgba(220,38,38,0.5); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         #k-plan-svg .apt-poly {
             stroke: none; cursor: pointer;
@@ -1798,28 +1799,35 @@
             });
         }
 
+        // Cache wrap reference for mousemove (avoids DOM query on every mouse event)
+        const kWrap = document.querySelector('.konfigurator-wrap');
+
+        // Preload cache: start buffering video on hover so click is instant
+        const videoCache = {};
+        function preloadFloorVideo(floor) {
+            if (videoCache[floor.video]) return;
+            const v = document.createElement('video');
+            v.preload = 'auto';
+            v.src = floor.video;
+            videoCache[floor.video] = v;
+        }
+
         // Build SVG polygons
         kFloors.forEach((floor, i) => {
             const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             poly.setAttribute('points', floor.points.map(p => p.join(',')).join(' '));
             poly.dataset.index = i;
 
-            poly.addEventListener('mouseenter', e => {
-                const currentFill = getComputedStyle(poly).fill;
+            poly.addEventListener('mouseenter', () => {
                 poly.style.animation = 'none';
-                poly.style.transition = 'none';
-                poly.style.fill = currentFill;
-                poly.getBoundingClientRect(); // force reflow
                 poly.style.transition = 'fill 0.35s ease';
-                requestAnimationFrame(() => {
-                    poly.style.fill = 'rgba(255,255,255,0.67)';
-                });
+                requestAnimationFrame(() => { poly.style.fill = 'rgba(255,255,255,0.67)'; });
                 kTooltip.innerHTML = `<div class="floor-tooltip__name">${floor.name}</div><div class="floor-tooltip__count">${floor.count} ${T[currentLang].floor_apts}</div><div class="floor-tooltip__hint">${T[currentLang].floor_click}</div>`;
                 kTooltip.classList.add('visible');
+                preloadFloorVideo(floor); // start buffering on hover
             });
             poly.addEventListener('mousemove', e => {
-                const wrap = document.querySelector('.konfigurator-wrap');
-                const rect = wrap.getBoundingClientRect();
+                const rect = kWrap.getBoundingClientRect();
                 const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
                 const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
                 kTooltip.style.left = x + '%';
@@ -1828,11 +1836,7 @@
             poly.addEventListener('mouseleave', () => {
                 poly.style.transition = 'fill 0.35s ease';
                 poly.style.fill = 'rgba(255,255,255,0.18)';
-                setTimeout(() => {
-                    poly.style.animation = '';
-                    poly.style.fill = '';
-                    poly.style.transition = '';
-                }, 380);
+                setTimeout(() => { poly.style.animation = ''; poly.style.fill = ''; poly.style.transition = ''; }, 380);
                 kTooltip.classList.remove('visible');
             });
 
@@ -1840,15 +1844,28 @@
             kSvg.appendChild(poly);
         });
 
+        function setVideoLoading(show) {
+            let spinner = document.getElementById('k-video-spinner');
+            if (show && !spinner) {
+                spinner = document.createElement('div');
+                spinner.id = 'k-video-spinner';
+                spinner.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:10;';
+                spinner.innerHTML = '<div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite"></div>';
+                kVideoOverlay.appendChild(spinner);
+            } else if (!show && spinner) {
+                spinner.remove();
+            }
+        }
+
         function openFloor(floor) {
             kCurrentFloor = floor;
-
             kPlanImg.src = floor.plan;
             let videoEnded = false;
             let imgReady = kPlanImg.complete && kPlanImg.naturalWidth > 0;
 
             function tryShowPlan() {
                 if (!videoEnded || !imgReady) return;
+                setVideoLoading(false);
                 kVideoOverlay.classList.remove('active');
                 kPlanLabel.textContent = floor.name + ' — Půdorys';
                 kPlanOverlay.classList.add('active');
@@ -1859,30 +1876,53 @@
             kPlanImg.onload = () => { imgReady = true; tryShowPlan(); };
             kVideo.onended = () => { videoEnded = true; tryShowPlan(); };
 
-            kVideo.src = floor.video;
+            // Use preloaded video blob if available, otherwise load normally
+            const cached = videoCache[floor.video];
+            if (cached && cached.readyState >= 3) {
+                // already buffered enough — copy src directly
+                kVideo.src = floor.video;
+            } else {
+                kVideo.src = floor.video;
+            }
+
             kVideo.oncanplay = () => {
                 kVideo.oncanplay = null;
+                setVideoLoading(false);
                 kVideoOverlay.classList.add('active');
+                kVideo.play();
             };
-            kVideo.play();
-        }
+            kVideo.onwaiting = () => setVideoLoading(true);
+            kVideo.onplaying  = () => setVideoLoading(false);
 
+            kVideoOverlay.classList.add('active');
+            setVideoLoading(true);
+            kVideo.load();
+            kVideo.play().catch(() => {});
+        }
 
         document.getElementById('k-back-btn').addEventListener('click', () => {
             if (!kCurrentFloor) return;
 
             kVideo.src = kCurrentFloor.reverseVideo;
+            kVideo.onwaiting = () => setVideoLoading(true);
+            kVideo.onplaying  = () => setVideoLoading(false);
             kVideo.oncanplay = () => {
                 kVideo.oncanplay = null;
+                setVideoLoading(false);
                 kPlanOverlay.classList.remove('active');
                 kVideoOverlay.classList.add('active');
+                kVideo.play();
             };
             kVideo.onended = () => {
+                setVideoLoading(false);
                 kVideoOverlay.classList.remove('active');
                 kVideo.src = '';
                 kCurrentFloor = null;
             };
-            kVideo.play();
+            kVideoOverlay.classList.add('active');
+            setVideoLoading(true);
+            kVideo.load();
+            kVideo.play().catch(() => {});
         });
 
         /* =============================================
