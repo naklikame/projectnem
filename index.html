@@ -1425,23 +1425,6 @@
             heroTitle.appendChild(span);
         });
 
-        // Preload all configurator videos during the preloader screen (~6s window)
-        // Priority order: forward videos first, then reverse videos
-        const ALL_VIDEOS = [
-            '1np.mp4','2np.mp4','3np.mp4','4np.mp4','5np.mp4','6np.mp4',
-            '1np-reverse.mp4','2np-reverse.mp4','3np-reverse.mp4','4np-reverse.mp4','5np-reverse.mp4','6np-reverse.mp4'
-        ];
-        ALL_VIDEOS.forEach((src, i) => {
-            // Stagger slightly so we don't saturate bandwidth all at once
-            setTimeout(() => {
-                if (videoCache[src]) return;
-                const v = document.createElement('video');
-                v.preload = 'auto';
-                v.src = src;
-                videoCache[src] = v;
-            }, i * 200);
-        });
-
         const tl = gsap.timeline();
 
         // Progress bar fills over the whole preloader duration (~6.5s)
@@ -1861,85 +1844,85 @@
             kSvg.appendChild(poly);
         });
 
-        function setVideoLoading(show) {
-            let spinner = document.getElementById('k-video-spinner');
-            if (show && !spinner) {
-                spinner = document.createElement('div');
-                spinner.id = 'k-video-spinner';
-                spinner.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:10;';
-                spinner.innerHTML = '<div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite"></div>';
-                kVideoOverlay.appendChild(spinner);
-            } else if (!show && spinner) {
-                spinner.remove();
+        function playVideo(src, onEnded) {
+            // Clear old handlers
+            kVideo.oncanplaythrough = null;
+            kVideo.onended = null;
+            kVideo.onerror = null;
+
+            let spinnerTimer = null;
+
+            function showSpinner() {
+                let s = document.getElementById('k-video-spinner');
+                if (!s) {
+                    s = document.createElement('div');
+                    s.id = 'k-video-spinner';
+                    s.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;';
+                    s.innerHTML = '<div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite"></div>';
+                    kVideoOverlay.appendChild(s);
+                }
             }
+            function hideSpinner() {
+                clearTimeout(spinnerTimer);
+                const s = document.getElementById('k-video-spinner');
+                if (s) s.remove();
+            }
+
+            kVideo.src = src;
+            kVideo.currentTime = 0;
+
+            // Show spinner only if loading takes > 400ms
+            spinnerTimer = setTimeout(showSpinner, 400);
+
+            kVideo.oncanplaythrough = () => {
+                hideSpinner();
+                kVideo.oncanplaythrough = null;
+                kVideo.play().catch(() => {});
+            };
+            kVideo.onended = () => {
+                hideSpinner();
+                kVideo.onended = null;
+                if (onEnded) onEnded();
+            };
+            kVideo.onerror = () => {
+                hideSpinner();
+            };
+
+            kVideo.load();
         }
 
         function openFloor(floor) {
             kCurrentFloor = floor;
-            kPlanImg.src = floor.plan;
-            let videoEnded = false;
-            let imgReady = kPlanImg.complete && kPlanImg.naturalWidth > 0;
 
-            function tryShowPlan() {
-                if (!videoEnded || !imgReady) return;
-                setVideoLoading(false);
+            // Preload plan image in background
+            kPlanImg.src = floor.plan;
+            let imgReady = kPlanImg.complete && kPlanImg.naturalWidth > 0;
+            if (!imgReady) kPlanImg.onload = () => { imgReady = true; };
+
+            kVideoOverlay.classList.add('active');
+
+            playVideo(floor.video, () => {
+                // Video ended — show floor plan
                 kVideoOverlay.classList.remove('active');
                 kPlanLabel.textContent = floor.name + ' — Půdorys';
                 kPlanOverlay.classList.add('active');
-                kVideo.src = '';
                 renderApartments(floor);
-            }
-
-            kPlanImg.onload = () => { imgReady = true; tryShowPlan(); };
-            kVideo.onended = () => { videoEnded = true; tryShowPlan(); };
-
-            // Use preloaded video blob if available, otherwise load normally
-            const cached = videoCache[floor.video];
-            if (cached && cached.readyState >= 3) {
-                // already buffered enough — copy src directly
-                kVideo.src = floor.video;
-            } else {
-                kVideo.src = floor.video;
-            }
-
-            kVideo.oncanplay = () => {
-                kVideo.oncanplay = null;
-                setVideoLoading(false);
-                kVideoOverlay.classList.add('active');
-                kVideo.play();
-            };
-            kVideo.onwaiting = () => setVideoLoading(true);
-            kVideo.onplaying  = () => setVideoLoading(false);
-
-            kVideoOverlay.classList.add('active');
-            setVideoLoading(true);
-            kVideo.load();
-            kVideo.play().catch(() => {});
+            });
         }
 
         document.getElementById('k-back-btn').addEventListener('click', () => {
             if (!kCurrentFloor) return;
+            const floor = kCurrentFloor;
 
-            kVideo.src = kCurrentFloor.reverseVideo;
-            kVideo.onwaiting = () => setVideoLoading(true);
-            kVideo.onplaying  = () => setVideoLoading(false);
-            kVideo.oncanplay = () => {
-                kVideo.oncanplay = null;
-                setVideoLoading(false);
-                kPlanOverlay.classList.remove('active');
-                kVideoOverlay.classList.add('active');
-                kVideo.play();
-            };
-            kVideo.onended = () => {
-                setVideoLoading(false);
+            kPlanOverlay.classList.remove('active');
+            kVideoOverlay.classList.add('active');
+
+            playVideo(floor.reverseVideo, () => {
+                // Reverse ended — back to building view
                 kVideoOverlay.classList.remove('active');
                 kVideo.src = '';
                 kCurrentFloor = null;
-            };
-            kVideoOverlay.classList.add('active');
-            setVideoLoading(true);
-            kVideo.load();
-            kVideo.play().catch(() => {});
+            });
         });
 
         /* =============================================
