@@ -1844,85 +1844,84 @@
             kSvg.appendChild(poly);
         });
 
-        function playVideo(src, onEnded) {
-            // Clear old handlers
+        // Spinner shown on konfigurator wrap (not inside black overlay)
+        const kSpinnerWrap = document.querySelector('.konfigurator-wrap');
+        function showKSpinner() {
+            if (document.getElementById('k-video-spinner')) return;
+            const s = document.createElement('div');
+            s.id = 'k-video-spinner';
+            s.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:50;pointer-events:none;';
+            s.innerHTML = '<div style="width:36px;height:36px;border:3px solid rgba(0,0,0,0.15);border-top-color:#1A2340;border-radius:50%;animation:spin 0.7s linear infinite"></div>';
+            kSpinnerWrap.appendChild(s);
+        }
+        function hideKSpinner() {
+            const s = document.getElementById('k-video-spinner');
+            if (s) s.remove();
+        }
+
+        function playVideo(src, onReady, onEnded) {
             kVideo.oncanplaythrough = null;
             kVideo.onended = null;
             kVideo.onerror = null;
 
-            let spinnerTimer = null;
-
-            function showSpinner() {
-                let s = document.getElementById('k-video-spinner');
-                if (!s) {
-                    s = document.createElement('div');
-                    s.id = 'k-video-spinner';
-                    s.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;';
-                    s.innerHTML = '<div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.25);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite"></div>';
-                    kVideoOverlay.appendChild(s);
-                }
-            }
-            function hideSpinner() {
-                clearTimeout(spinnerTimer);
-                const s = document.getElementById('k-video-spinner');
-                if (s) s.remove();
-            }
+            let spinnerTimer = setTimeout(showKSpinner, 400);
 
             kVideo.src = src;
             kVideo.currentTime = 0;
 
-            // Show spinner only if loading takes > 400ms
-            spinnerTimer = setTimeout(showSpinner, 400);
-
             kVideo.oncanplaythrough = () => {
-                hideSpinner();
+                clearTimeout(spinnerTimer);
+                hideKSpinner();
                 kVideo.oncanplaythrough = null;
+                if (onReady) onReady();
                 kVideo.play().catch(() => {});
             };
             kVideo.onended = () => {
-                hideSpinner();
                 kVideo.onended = null;
                 if (onEnded) onEnded();
             };
-            kVideo.onerror = () => {
-                hideSpinner();
-            };
-
+            kVideo.onerror = () => { clearTimeout(spinnerTimer); hideKSpinner(); };
             kVideo.load();
         }
 
         function openFloor(floor) {
             kCurrentFloor = floor;
-
-            // Preload plan image in background
             kPlanImg.src = floor.plan;
-            let imgReady = kPlanImg.complete && kPlanImg.naturalWidth > 0;
-            if (!imgReady) kPlanImg.onload = () => { imgReady = true; };
 
-            kVideoOverlay.classList.add('active');
-
-            playVideo(floor.video, () => {
-                // Video ended — show floor plan
-                kVideoOverlay.classList.remove('active');
-                kPlanLabel.textContent = floor.name + ' — Půdorys';
-                kPlanOverlay.classList.add('active');
-                renderApartments(floor);
-            });
+            playVideo(
+                floor.video,
+                () => {
+                    // Video ready — NOW show overlay (no black flash)
+                    kVideoOverlay.classList.add('active');
+                },
+                () => {
+                    // Video ended — switch to floor plan
+                    kVideoOverlay.classList.remove('active');
+                    kPlanLabel.textContent = floor.name + ' — Půdorys';
+                    kPlanOverlay.classList.add('active');
+                    renderApartments(floor);
+                }
+            );
         }
 
         document.getElementById('k-back-btn').addEventListener('click', () => {
             if (!kCurrentFloor) return;
             const floor = kCurrentFloor;
-
             kPlanOverlay.classList.remove('active');
-            kVideoOverlay.classList.add('active');
 
-            playVideo(floor.reverseVideo, () => {
-                // Reverse ended — back to building view
-                kVideoOverlay.classList.remove('active');
-                kVideo.src = '';
-                kCurrentFloor = null;
-            });
+            playVideo(
+                floor.reverseVideo,
+                () => {
+                    // Reverse ready — show overlay
+                    kVideoOverlay.classList.add('active');
+                },
+                () => {
+                    // Reverse ended — back to building
+                    kVideoOverlay.classList.remove('active');
+                    kVideo.src = '';
+                    kCurrentFloor = null;
+                }
+            );
         });
 
         /* =============================================
