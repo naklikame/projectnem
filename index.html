@@ -1402,6 +1402,7 @@
 
     <script>
         let currentLang = 'cs';
+        const videoCache = {}; // shared across preloader + configurator
         gsap.registerPlugin(ScrollTrigger);
 
         /* =============================================
@@ -1422,6 +1423,23 @@
                 span.innerText = char;
             }
             heroTitle.appendChild(span);
+        });
+
+        // Preload all configurator videos during the preloader screen (~6s window)
+        // Priority order: forward videos first, then reverse videos
+        const ALL_VIDEOS = [
+            '1np.mp4','2np.mp4','3np.mp4','4np.mp4','5np.mp4','6np.mp4',
+            '1np-reverse.mp4','2np-reverse.mp4','3np-reverse.mp4','4np-reverse.mp4','5np-reverse.mp4','6np-reverse.mp4'
+        ];
+        ALL_VIDEOS.forEach((src, i) => {
+            // Stagger slightly so we don't saturate bandwidth all at once
+            setTimeout(() => {
+                if (videoCache[src]) return;
+                const v = document.createElement('video');
+                v.preload = 'auto';
+                v.src = src;
+                videoCache[src] = v;
+            }, i * 200);
         });
 
         const tl = gsap.timeline();
@@ -1803,7 +1821,6 @@
         const kWrap = document.querySelector('.konfigurator-wrap');
 
         // Preload cache: start buffering video on hover so click is instant
-        const videoCache = {};
         function preloadFloorVideo(floor) {
             if (videoCache[floor.video]) return;
             const v = document.createElement('video');
