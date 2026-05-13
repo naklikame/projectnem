@@ -1882,36 +1882,49 @@
         }
 
         let _spinnerTimer = null;
+        let _readyCheckTimer = null;
 
         function playVideo(src, onReady, onEnded) {
-            // Full reset — prevents bad state after many cycles
             kVideo.pause();
-            kVideo.oncanplaythrough = null;
+            kVideo.oncanplay = null;
             kVideo.onended = null;
             kVideo.onerror = null;
             clearTimeout(_spinnerTimer);
+            clearTimeout(_readyCheckTimer);
             hideKSpinner();
+
+            let proceeded = false;
+            function proceed() {
+                if (proceeded) return;
+                proceeded = true;
+                clearTimeout(_spinnerTimer);
+                clearTimeout(_readyCheckTimer);
+                hideKSpinner();
+                kVideo.oncanplay = null;
+                if (onReady) onReady();
+                kVideo.play().catch(() => {});
+            }
 
             _spinnerTimer = setTimeout(showKSpinner, 400);
 
             kVideo.src = src;
+            kVideo.oncanplay = proceed;
+            kVideo.load();
 
-            kVideo.oncanplaythrough = () => {
-                clearTimeout(_spinnerTimer);
-                hideKSpinner();
-                kVideo.oncanplaythrough = null;
-                if (onReady) onReady();
-                kVideo.play().catch(() => {});
-            };
+            // Fallback: video already buffered from cache → readyState >= 3 won't fire canplay
+            _readyCheckTimer = setTimeout(() => {
+                if (kVideo.readyState >= 3) proceed();
+            }, 80);
+
             kVideo.onended = () => {
                 kVideo.onended = null;
                 if (onEnded) onEnded();
             };
             kVideo.onerror = () => {
                 clearTimeout(_spinnerTimer);
+                clearTimeout(_readyCheckTimer);
                 hideKSpinner();
             };
-            kVideo.load();
         }
 
         function openFloor(floor) {
