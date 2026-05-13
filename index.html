@@ -1881,18 +1881,23 @@
             if (s) s.remove();
         }
 
+        let _spinnerTimer = null;
+
         function playVideo(src, onReady, onEnded) {
+            // Full reset — prevents bad state after many cycles
+            kVideo.pause();
             kVideo.oncanplaythrough = null;
             kVideo.onended = null;
             kVideo.onerror = null;
+            clearTimeout(_spinnerTimer);
+            hideKSpinner();
 
-            let spinnerTimer = setTimeout(showKSpinner, 400);
+            _spinnerTimer = setTimeout(showKSpinner, 400);
 
             kVideo.src = src;
-            kVideo.currentTime = 0;
 
             kVideo.oncanplaythrough = () => {
-                clearTimeout(spinnerTimer);
+                clearTimeout(_spinnerTimer);
                 hideKSpinner();
                 kVideo.oncanplaythrough = null;
                 if (onReady) onReady();
@@ -1902,7 +1907,10 @@
                 kVideo.onended = null;
                 if (onEnded) onEnded();
             };
-            kVideo.onerror = () => { clearTimeout(spinnerTimer); hideKSpinner(); };
+            kVideo.onerror = () => {
+                clearTimeout(_spinnerTimer);
+                hideKSpinner();
+            };
             kVideo.load();
         }
 
@@ -1912,12 +1920,8 @@
 
             playVideo(
                 floor.video,
+                () => { kVideoOverlay.classList.add('active'); },
                 () => {
-                    // Video ready — NOW show overlay (no black flash)
-                    kVideoOverlay.classList.add('active');
-                },
-                () => {
-                    // Video ended — switch to floor plan
                     kVideoOverlay.classList.remove('active');
                     kPlanLabel.textContent = floor.name + ' — Půdorys';
                     kPlanOverlay.classList.add('active');
@@ -1929,19 +1933,18 @@
         document.getElementById('k-back-btn').addEventListener('click', () => {
             if (!kCurrentFloor) return;
             const floor = kCurrentFloor;
+            kCurrentFloor = null; // clear immediately to prevent double-click
 
             playVideo(
                 floor.reverseVideo,
                 () => {
-                    // Reverse ready — NOW swap: hide plan, show video in one frame
                     kPlanOverlay.classList.remove('active');
                     kVideoOverlay.classList.add('active');
                 },
                 () => {
-                    // Reverse ended — back to building
                     kVideoOverlay.classList.remove('active');
-                    kVideo.src = '';
-                    kCurrentFloor = null;
+                    kVideo.removeAttribute('src');
+                    kVideo.load(); // fully reset video element
                 }
             );
         });
