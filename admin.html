@@ -706,20 +706,31 @@
     let currentUser = { username:'', label:'Admin', color:'#E5A025' };
 
     async function loadCurrentUser() {
-        try {
-            const r = await fetch('/api/me');
-            if (!r.ok) return;
-            currentUser = await r.json();
-            const init = currentUser.label[0].toUpperCase();
-            ['s-avatar','t-avatar'].forEach(id => document.getElementById(id).textContent = init);
-            document.getElementById('s-name').textContent = currentUser.label;
-            document.getElementById('s-role').textContent = currentUser.username;
-            document.getElementById('t-name').textContent = currentUser.label;
-            document.getElementById('t-role').textContent = currentUser.username;
-            document.getElementById('set-name').textContent = currentUser.label;
-            document.getElementById('set-user').textContent = currentUser.username;
-            document.getElementById('set-role').textContent = currentUser.username;
-        } catch {}
+        // Try sessionStorage first (Netlify / static), fallback to server API
+        let user = window._lgSession;
+        if (!user) {
+            try {
+                const s = JSON.parse(sessionStorage.getItem('gv_admin_session'));
+                if (s) user = s;
+            } catch(e) {}
+        }
+        if (!user) {
+            try {
+                const r = await fetch('/api/me');
+                if (r.ok) user = await r.json();
+            } catch(e) {}
+        }
+        if (!user) return;
+        currentUser = user;
+        const init = user.label[0].toUpperCase();
+        ['s-avatar','t-avatar'].forEach(id => document.getElementById(id).textContent = init);
+        document.getElementById('s-name').textContent = user.label;
+        document.getElementById('s-role').textContent = user.username;
+        document.getElementById('t-name').textContent = user.label;
+        document.getElementById('t-role').textContent = user.username;
+        document.getElementById('set-name').textContent = user.label;
+        document.getElementById('set-user').textContent = user.username;
+        document.getElementById('set-role').textContent = user.username;
     }
 
     /* ── ROUTER ─────────────────────────────────────────────────────── */
@@ -999,6 +1010,130 @@
     /* ── INIT ───────────────────────────────────────────────────────── */
     loadCurrentUser().then(() => renderTable());
     window.addEventListener('storage', e => { if (e.key === LS_KEY) renderTable(); });
+</script>
+
+<!-- ── LOGIN GATE ─────────────────────────────────────────────────── -->
+<style>
+#login-gate {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #F4F6FB;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', sans-serif;
+}
+#login-gate .card {
+    width: 420px; background: #fff;
+    border: 1px solid #E8ECF4; border-radius: 16px;
+    padding: 2.5rem 2rem 2rem;
+    box-shadow: 0 4px 32px rgba(26,35,64,.07);
+}
+#login-gate .logo-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:2rem; }
+#login-gate .logo-icon { width:48px; height:48px; background:#E5A025; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; color:#fff; }
+#login-gate .logo-title { font-weight:700; font-size:1.1rem; letter-spacing:3px; text-transform:uppercase; color:#1A2340; }
+#login-gate .logo-sub { font-size:.72rem; letter-spacing:2px; text-transform:uppercase; color:#8C93A8; font-weight:500; margin-top:-6px; }
+#login-gate .section-label { font-size:.72rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:#8C93A8; margin-bottom:8px; }
+#login-gate .profiles { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:1.4rem; }
+#login-gate .profile-btn { background:#F4F6FB; border:1.5px solid #E8ECF4; border-radius:10px; padding:.75rem .5rem .65rem; cursor:pointer; font-family:'Inter',sans-serif; font-size:.75rem; font-weight:600; letter-spacing:.5px; color:#8C93A8; text-transform:uppercase; transition:all .15s; text-align:center; }
+#login-gate .profile-btn:hover { border-color:#8C93A8; color:#1A2340; background:#fff; }
+#login-gate .profile-btn.active { border-color:#1A2340; background:#fff; color:#1A2340; box-shadow:0 0 0 3px rgba(26,35,64,.07); }
+#login-gate .pdot { width:8px; height:8px; border-radius:50%; margin:0 auto 7px; }
+#login-gate .field { display:flex; flex-direction:column; gap:6px; margin-bottom:1.1rem; }
+#login-gate .field label { font-size:.72rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:#8C93A8; }
+#login-gate .field input { width:100%; border:1.5px solid #E8ECF4; border-radius:9px; padding:.72rem 1rem; font-family:'Inter',sans-serif; font-size:.95rem; color:#1A2340; background:#fff; outline:none; transition:border-color .2s; letter-spacing:2px; }
+#login-gate .field input:focus { border-color:#E5A025; }
+#login-gate .btn-submit { width:100%; background:#1A2340; color:#fff; border:none; border-radius:9px; font-family:'Inter',sans-serif; font-size:.82rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:.9rem; cursor:pointer; transition:opacity .15s; }
+#login-gate .btn-submit:hover { opacity:.85; }
+#login-gate .err { font-size:.78rem; color:#DC2626; text-align:center; min-height:1.2em; margin-top:.75rem; }
+@keyframes lg-shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+.lg-shake { animation: lg-shake .35s ease; }
+</style>
+
+<div id="login-gate">
+  <div class="card">
+    <div class="logo-wrap">
+      <div class="logo-icon">GV</div>
+      <div class="logo-title">Gran Via</div>
+      <div class="logo-sub">Přístup do správy</div>
+    </div>
+    <div class="section-label">Vyberte profil</div>
+    <div class="profiles" id="lg-profiles">
+      <div class="profile-btn" onclick="lgSelect('investor')" id="lg-investor"><div class="pdot" style="background:#818cf8"></div>Investor</div>
+      <div class="profile-btn" onclick="lgSelect('poradce')"  id="lg-poradce"><div class="pdot" style="background:#34d399"></div>Poradce</div>
+      <div class="profile-btn" onclick="lgSelect('makler')"   id="lg-makler"><div class="pdot" style="background:#fb923c"></div>Makléř</div>
+    </div>
+    <div class="field">
+      <label>Heslo</label>
+      <input type="password" id="lg-pwd" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-submit" onclick="lgSubmit()">Přihlásit se</button>
+    <div class="err" id="lg-err"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+    const USERS = {
+        investor: { hash: '38bf97e5cedb537d469f30dd6b8b4236985329b4e4c10297e20855ecdf36b2e4', label: 'Investor', color: '#818cf8' },
+        poradce:  { hash: '18d80b52a8bb2fb3193b6cdde4579360334e6a22ab51aede4ec31ab0f60f654f', label: 'Poradce',  color: '#34d399' },
+        makler:   { hash: '13b4166313f86d87b397c9fda0f99eedc8bfa592f494d481705bf416d6553a79', label: 'Makléř',   color: '#fb923c' },
+    };
+    const SESSION_KEY = 'gv_admin_session';
+
+    async function sha256(str) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
+    // Check existing session
+    try {
+        const s = JSON.parse(sessionStorage.getItem(SESSION_KEY));
+        if (s && USERS[s.username]) {
+            document.getElementById('login-gate').style.display = 'none';
+            // Update user badge if already rendered
+            window._lgSession = s;
+        }
+    } catch(e) {}
+
+    let lgUser = null;
+
+    window.lgSelect = function(u) {
+        document.querySelectorAll('#login-gate .profile-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('lg-' + u).classList.add('active');
+        lgUser = u;
+        document.getElementById('lg-pwd').focus();
+    };
+
+    window.lgSubmit = async function() {
+        const errEl = document.getElementById('lg-err');
+        if (!lgUser) {
+            errEl.textContent = 'Vyberte profil.';
+            const p = document.getElementById('lg-profiles');
+            p.classList.add('lg-shake');
+            setTimeout(() => p.classList.remove('lg-shake'), 400);
+            return;
+        }
+        const pwd = document.getElementById('lg-pwd').value;
+        const hash = await sha256(pwd);
+        if (hash === USERS[lgUser].hash) {
+            const session = { username: lgUser, label: USERS[lgUser].label, color: USERS[lgUser].color };
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            window._lgSession = session;
+            document.getElementById('login-gate').style.display = 'none';
+            // Refresh user badge
+            if (typeof loadCurrentUser === 'function') loadCurrentUser();
+        } else {
+            errEl.textContent = 'Nesprávné heslo.';
+            document.getElementById('lg-pwd').value = '';
+            document.getElementById('lg-pwd').focus();
+        }
+    };
+
+    document.addEventListener('keydown', e => {
+        if (document.getElementById('login-gate').style.display !== 'none') return;
+    });
+    document.getElementById('lg-pwd').addEventListener('keydown', e => {
+        if (e.key === 'Enter') lgSubmit();
+    });
+})();
 </script>
 </body>
 </html>
