@@ -1881,56 +1881,29 @@
             if (s) s.remove();
         }
 
-        let _spinnerTimer = null;
-        let _readyCheckTimer = null;
-        let _forceTimer = null;
-
         function playVideo(src, onReady, onEnded) {
-            kVideo.pause();
-            kVideo.oncanplay = null;
+            kVideo.oncanplaythrough = null;
             kVideo.onended = null;
             kVideo.onerror = null;
-            clearTimeout(_spinnerTimer);
-            clearTimeout(_readyCheckTimer);
-            clearTimeout(_forceTimer);
-            hideKSpinner();
 
-            let proceeded = false;
-            function proceed() {
-                if (proceeded) return;
-                proceeded = true;
-                clearTimeout(_spinnerTimer);
-                clearTimeout(_readyCheckTimer);
-                clearTimeout(_forceTimer);
-                hideKSpinner();
-                kVideo.oncanplay = null;
-                if (onReady) onReady();
-                kVideo.play().catch(() => {});
-            }
-
-            _spinnerTimer = setTimeout(showKSpinner, 400);
-            // Fallback 1: already in cache, readyState jumps fast
-            _readyCheckTimer = setTimeout(() => { if (kVideo.readyState >= 3) proceed(); }, 80);
-            // Fallback 2: absolute safety net — never stay frozen
-            _forceTimer = setTimeout(proceed, 2500);
+            let spinnerTimer = setTimeout(showKSpinner, 400);
 
             kVideo.src = src;
-            kVideo.oncanplay = proceed;
-            kVideo.load();
+            kVideo.currentTime = 0;
 
+            kVideo.oncanplaythrough = () => {
+                clearTimeout(spinnerTimer);
+                hideKSpinner();
+                kVideo.oncanplaythrough = null;
+                if (onReady) onReady();
+                kVideo.play().catch(() => {});
+            };
             kVideo.onended = () => {
                 kVideo.onended = null;
                 if (onEnded) onEnded();
             };
-            kVideo.onerror = () => {
-                clearTimeout(_spinnerTimer);
-                clearTimeout(_readyCheckTimer);
-                clearTimeout(_forceTimer);
-                hideKSpinner();
-                // Video missing/failed — skip it, call onEnded directly
-                if (onReady) onReady();
-                setTimeout(() => { if (onEnded) onEnded(); }, 100);
-            };
+            kVideo.onerror = () => { clearTimeout(spinnerTimer); hideKSpinner(); };
+            kVideo.load();
         }
 
         function openFloor(floor) {
@@ -1939,8 +1912,12 @@
 
             playVideo(
                 floor.video,
-                () => { kVideoOverlay.classList.add('active'); },
                 () => {
+                    // Video ready — NOW show overlay (no black flash)
+                    kVideoOverlay.classList.add('active');
+                },
+                () => {
+                    // Video ended — switch to floor plan
                     kVideoOverlay.classList.remove('active');
                     kPlanLabel.textContent = floor.name + ' — Půdorys';
                     kPlanOverlay.classList.add('active');
@@ -1952,18 +1929,19 @@
         document.getElementById('k-back-btn').addEventListener('click', () => {
             if (!kCurrentFloor) return;
             const floor = kCurrentFloor;
-            kCurrentFloor = null; // clear immediately to prevent double-click
 
             playVideo(
                 floor.reverseVideo,
                 () => {
+                    // Reverse ready — NOW swap: hide plan, show video in one frame
                     kPlanOverlay.classList.remove('active');
                     kVideoOverlay.classList.add('active');
                 },
                 () => {
+                    // Reverse ended — back to building
                     kVideoOverlay.classList.remove('active');
-                    kVideo.pause();
                     kVideo.src = '';
+                    kCurrentFloor = null;
                 }
             );
         });
