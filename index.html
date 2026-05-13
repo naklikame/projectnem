@@ -1927,7 +1927,9 @@
                 clearTimeout(_readyCheckTimer);
                 clearTimeout(_forceTimer);
                 hideKSpinner();
-                proceed(); // on error, skip video and proceed anyway
+                // Video missing/failed — skip it, call onEnded directly
+                if (onReady) onReady();
+                setTimeout(() => { if (onEnded) onEnded(); }, 100);
             };
         }
 
