@@ -43,7 +43,8 @@
 
         /* --- PRELOADER --- */
         #preloader {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            position: fixed; top: 0; left: 0; width: 100vw;
+            height: 100vh; height: 100dvh;
             z-index: 9999; display: flex; justify-content: center; align-items: center;
             pointer-events: all;
         }
@@ -51,8 +52,8 @@
             position: absolute; left: 0; width: 100%;
             background: var(--black);
         }
-        .pre-panel-top { top: 0; height: 51vh; }
-        .pre-panel-bottom { bottom: 0; height: 51vh; }
+        .pre-panel-top { top: 0; height: 51vh; height: 51dvh; }
+        .pre-panel-bottom { bottom: 0; height: 51vh; height: 51dvh; }
         .intro-text-wrapper {
             position: relative; z-index: 2;
             width: 100%; text-align: center;
@@ -131,8 +132,9 @@
 
         /* Mobile nav overlay */
         .mobile-nav {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-            background: var(--black); z-index: 999; flex-direction: column;
+            display: none; position: fixed; top: 0; left: 0; width: 100%;
+            height: 100vh; height: 100dvh;
+            background: var(--black); z-index: 1001; flex-direction: column;
             justify-content: center; align-items: center; gap: 2.5rem;
             opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
         }
@@ -144,6 +146,13 @@
         }
         .mobile-nav a:hover { color: var(--gray-dark); }
         .mobile-nav .btn-header { font-family: var(--font-body); font-size: 1rem; }
+        .mobile-nav-close {
+            position: absolute; top: 1.2rem; right: 1.4rem;
+            background: none; border: none; color: var(--white);
+            font-size: 1.6rem; cursor: pointer; padding: 6px; line-height: 1;
+            opacity: 0.7; transition: opacity 0.2s;
+        }
+        .mobile-nav-close:hover { opacity: 1; }
 
         /* --- GSAP REVEAL --- */
         .gsap-reveal { opacity: 0; transform: translateY(40px); }
@@ -841,7 +850,7 @@
 
         @media (max-width: 768px) {
             /* Section paddings */
-            .scroll-text-sec  { padding: 8vh 6vw; min-height: auto; }
+            .scroll-text-sec  { padding: 5vh 6vw; min-height: auto; }
             .benefits-sec     { padding: 8vh 5vw; }
             .konfigurator-sec { padding: 8vh 5vw; }
             .pricelist-sec    { padding: 8vh 5vw; }
@@ -849,6 +858,12 @@
             .finance-sec      { padding: 8vh 5vw; gap: 3rem; }
             .contact-sec      { padding: 8vh 5vw; }
             .rezidence-sec    { padding: 6vh 5vw; }
+
+            /* Scroll text — compact on mobile */
+            .highlight-text {
+                font-size: 1rem; line-height: 1.7;
+                text-align: left; color: var(--gray);
+            }
 
             /* Hero */
             .hero-title { margin-left: 0; }
@@ -863,8 +878,15 @@
             .service-card-img { height: 220px; }
             .scrolling-cards  { gap: 2rem; }
 
-            /* Filter pills */
-            .filter-pill { padding: 7px 14px; font-size: 0.82rem; }
+            /* Filter pills — horizontal scroll, no wrap */
+            .filter-pills {
+                flex-wrap: nowrap; overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 4px; gap: 8px;
+                scrollbar-width: none;
+            }
+            .filter-pills::-webkit-scrollbar { display: none; }
+            .filter-pill { flex-shrink: 0; padding: 8px 18px; font-size: 0.88rem; }
 
             /* Apt detail overlay */
             #apt-detail-overlay { overflow-y: auto; }
@@ -958,6 +980,7 @@
 
     <!-- Mobile nav overlay -->
     <div class="mobile-nav" id="mobile-nav">
+        <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Zavřít menu">&#10005;</button>
         <a href="#konfigurator" onclick="closeMobileNav()" data-i18n="nav_apts">Výběr bytů</a>
         <a href="#lokalita" onclick="closeMobileNav()" data-i18n="nav_loc">Lokalita</a>
         <a href="#financovani" onclick="closeMobileNav()" data-i18n="nav_fin">Financování</a>
