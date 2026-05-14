@@ -303,6 +303,11 @@
         .konfigurator-header { margin-bottom: 3rem; }
         .konfigurator-hint { font-size: 0.9rem; color: var(--text-light); margin-top: -1rem; }
 
+        /* Mobile card wrapper — invisible on desktop */
+        .k-mobile-card { display: contents; }
+        .k-mobile-floors { display: none; }
+        .k-floor-btn { display: none; }
+
         .konfigurator-wrap {
             position: relative; width: 100%; border-radius: 20px;
             overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.12);
@@ -913,6 +918,57 @@
 
             /* Footer */
             footer { padding: 3rem 5vw; }
+
+            /* ── Mobile konfigurátor card ── */
+            .k-mobile-card {
+                display: block;
+                background: var(--black);
+                border-radius: 24px;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+            }
+            .konfigurator-hint { display: none; }
+            .konfigurator-svg  { display: none !important; }
+            .floor-tooltip     { display: none !important; }
+
+            /* Obrázek budovy — pevná výška */
+            .k-mobile-card .konfigurator-wrap {
+                border-radius: 0; box-shadow: none; cursor: default;
+            }
+            .k-mobile-card .konfigurator-img {
+                height: 240px; object-fit: cover; object-position: center top;
+            }
+
+            /* Sekce s tlačítky */
+            .k-mobile-floors { display: block; padding: 1.3rem 1.2rem 1.5rem; }
+            .k-mobile-hint {
+                color: rgba(255,255,255,0.7); font-size: 0.9rem;
+                line-height: 1.55; margin-bottom: 1.1rem;
+                font-family: var(--font-body);
+            }
+            .k-mobile-hint strong { color: #fff; font-weight: 600; }
+
+            /* Grid tlačítek pater */
+            .k-floor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .k-floor-btn {
+                display: block;
+                background: rgba(255,255,255,0.07);
+                border: 1px solid rgba(255,255,255,0.14);
+                color: #fff; border-radius: 50px;
+                padding: 0.7rem 0.4rem;
+                font-family: var(--font-body); font-size: 0.9rem; font-weight: 500;
+                cursor: pointer; transition: background 0.2s;
+                letter-spacing: 0.3px; text-align: center;
+            }
+            .k-floor-btn:active { background: rgba(255,255,255,0.2); }
+
+            /* Fullscreen při přehrávání videa/plánu */
+            .konfigurator-wrap.k-fullscreen {
+                position: fixed !important; inset: 0 !important;
+                z-index: 500 !important; border-radius: 0 !important;
+                width: 100% !important; height: 100dvh !important;
+                box-shadow: none !important;
+            }
         }
 
         @media (max-width: 600px) {
@@ -1083,6 +1139,7 @@
             <h2 class="sec-title" data-i18n="conf_title">Výběr rezidencí</h2>
             <p class="konfigurator-hint" data-i18n="conf_hint">Klikněte na patro budovy pro zobrazení podrobností</p>
         </div>
+        <div class="k-mobile-card">
         <div class="konfigurator-wrap gsap-reveal">
             <img src="hero.jpg" class="konfigurator-img" alt="Budova">
             <svg class="konfigurator-svg" id="konfigurator-svg"
@@ -1106,6 +1163,11 @@
                 </div>
                 <button class="k-back-btn" id="k-back-btn" data-i18n="back_btn">Zpět</button>
             </div>
+        </div>
+        <div class="k-mobile-floors">
+            <p class="k-mobile-hint"><strong>Zvolte si patro</strong> a prohlédněte si půdorys bytu.</p>
+            <div class="k-floor-grid" id="k-floor-grid"></div>
+        </div>
         </div>
     </section>
 
@@ -2023,15 +2085,14 @@
         function openFloor(floor) {
             kCurrentFloor = floor;
             kPlanImg.src = floor.plan;
+            if (window.innerWidth <= 768) kWrap.classList.add('k-fullscreen');
 
             playVideo(
                 floor.video,
                 () => {
-                    // Video ready — NOW show overlay (no black flash)
                     kVideoOverlay.classList.add('active');
                 },
                 () => {
-                    // Video ended — switch to floor plan
                     kVideoOverlay.classList.remove('active');
                     kPlanLabel.textContent = floor.name + ' — Půdorys';
                     kPlanOverlay.classList.add('active');
@@ -2047,18 +2108,29 @@
             playVideo(
                 floor.reverseVideo,
                 () => {
-                    // Reverse ready — NOW swap: hide plan, show video in one frame
                     kPlanOverlay.classList.remove('active');
                     kVideoOverlay.classList.add('active');
                 },
                 () => {
-                    // Reverse ended — back to building
                     kVideoOverlay.classList.remove('active');
                     kVideo.src = '';
                     kCurrentFloor = null;
+                    kWrap.classList.remove('k-fullscreen');
                 }
             );
         });
+
+        // Mobile floor buttons — generated from kFloors data
+        const kFloorGrid = document.getElementById('k-floor-grid');
+        if (kFloorGrid) {
+            kFloors.forEach(floor => {
+                const btn = document.createElement('button');
+                btn.className = 'k-floor-btn';
+                btn.textContent = floor.name;
+                btn.addEventListener('click', () => openFloor(floor));
+                kFloorGrid.appendChild(btn);
+            });
+        }
 
         /* =============================================
            APARTMENT DETAIL
