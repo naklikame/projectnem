@@ -928,7 +928,6 @@
                 box-shadow: 0 20px 60px rgba(0,0,0,0.18);
             }
             .konfigurator-hint { display: none; }
-            .konfigurator-svg  { display: none !important; }
             .floor-tooltip     { display: none !important; }
 
             /* Obrázek budovy — pevná výška */
@@ -2085,7 +2084,6 @@
         function openFloor(floor) {
             kCurrentFloor = floor;
             kPlanImg.src = floor.plan;
-            if (window.innerWidth <= 768) kWrap.classList.add('k-fullscreen');
 
             playVideo(
                 floor.video,
@@ -2115,7 +2113,6 @@
                     kVideoOverlay.classList.remove('active');
                     kVideo.src = '';
                     kCurrentFloor = null;
-                    kWrap.classList.remove('k-fullscreen');
                 }
             );
         });
