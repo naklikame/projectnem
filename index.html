@@ -1576,8 +1576,7 @@
         let currentLang = 'cs';
         const videoCache = {}; // shared across preloader + configurator
 
-        // Start sequential video preload after 1.5s — overlaps with preloader
-        // but delayed enough to not compete with initial page render
+        // Sequential video preload via fetch → blob URL (works on iOS Safari unlike <video preload>)
         (function startEarlyPreload() {
             const queue = [
                 '1np.mp4','2np.mp4','3np.mp4','4np.mp4','5np.mp4','6np.mp4',
@@ -1587,12 +1586,11 @@
                 if (i >= queue.length) return;
                 const src = queue[i];
                 if (videoCache[src]) { next(i + 1); return; }
-                const v = document.createElement('video');
-                v.preload = 'auto';
-                v.src = src;
-                videoCache[src] = v;
-                v.oncanplaythrough = () => next(i + 1);
-                v.onerror = () => next(i + 1);
+                videoCache[src] = 'loading';
+                fetch(src)
+                    .then(r => r.blob())
+                    .then(blob => { videoCache[src] = URL.createObjectURL(blob); next(i + 1); })
+                    .catch(() => { delete videoCache[src]; next(i + 1); });
             }
             setTimeout(() => next(0), 1500);
         })();
@@ -1997,13 +1995,14 @@
         // Cache wrap reference for mousemove (avoids DOM query on every mouse event)
         const kWrap = document.querySelector('.konfigurator-wrap');
 
-        // Preload cache: start buffering video on hover so click is instant
+        // Preload on hover via fetch → blob URL
         function preloadFloorVideo(floor) {
             if (videoCache[floor.video]) return;
-            const v = document.createElement('video');
-            v.preload = 'auto';
-            v.src = floor.video;
-            videoCache[floor.video] = v;
+            videoCache[floor.video] = 'loading';
+            fetch(floor.video)
+                .then(r => r.blob())
+                .then(blob => { videoCache[floor.video] = URL.createObjectURL(blob); })
+                .catch(() => { delete videoCache[floor.video]; });
         }
 
         // Build SVG polygons
@@ -2060,7 +2059,9 @@
 
             let spinnerTimer = setTimeout(showKSpinner, 400);
 
-            kVideo.src = src;
+            // Use blob URL from cache if ready, otherwise fall back to direct src
+            const cached = videoCache[src];
+            kVideo.src = (typeof cached === 'string' && cached !== 'loading') ? cached : src;
             kVideo.currentTime = 0;
 
             kVideo.oncanplaythrough = () => {
